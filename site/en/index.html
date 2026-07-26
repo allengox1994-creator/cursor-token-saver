@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursor Token Saver — A cognitive layer for AI coding agents: lossless token savings · verifiable memory · world model</title>
+<meta name="description" content="A cognitive layer for the Cursor agent: a content-addressed evidence store cuts tokens losslessly; verifiable semantic memory, a project world model and skill runbooks make the agent understand your project better with every session. Fully local, zero telemetry.">
+<link rel="alternate" hreflang="zh-CN" href="../">
+<link rel="alternate" hreflang="en" href="./">
+<style>
+  :root {
+    --bg: #0b0e14; --panel: #131822; --border: #232b3a; --text: #dbe2ee;
+    --muted: #8b96a8; --accent: #34d399; --accent2: #60a5fa; --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.7 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+  a { color: var(--accent2); text-decoration: none; }
+  code, .cmd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+  .logo { font-weight: 700; font-size: 18px; }
+  .logo span { color: var(--accent); }
+  nav .links a { color: var(--muted); margin-left: 24px; font-size: 14px; }
+  nav .links a:hover { color: var(--text); }
+
+  .hero { text-align: center; padding: 72px 0 56px; }
+  .hero h1 { font-size: 44px; line-height: 1.25; letter-spacing: -0.5px; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p.sub { color: var(--muted); font-size: 19px; margin: 20px auto 0; max-width: 680px; }
+  .cmd-box { display: inline-flex; align-items: center; gap: 14px; margin-top: 32px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 22px; font-size: 15px; }
+  .cmd-box .dollar { color: var(--accent); }
+  .cta-row { margin-top: 28px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 12px 26px; border-radius: 9px; font-weight: 600; font-size: 15px; }
+  .btn.primary { background: var(--accent); color: #06281c; }
+  .btn.ghost { border: 1px solid var(--border); color: var(--text); }
+  .btn:hover { filter: brightness(1.1); }
+  .hero .note { margin-top: 16px; color: var(--muted); font-size: 13px; }
+
+  .strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 40px 0 0; }
+  .strip .cell { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 22px; text-align: center; }
+  .strip .cell b { display: block; font-size: 22px; color: var(--accent); margin-bottom: 6px; }
+  .strip .cell span { color: var(--muted); font-size: 14px; }
+
+  section { padding: 72px 0 0; }
+  h2.sec { font-size: 30px; text-align: center; }
+  p.sec-sub { text-align: center; color: var(--muted); margin: 12px auto 40px; max-width: 640px; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .step { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 26px; }
+  .step .n { color: var(--accent); font-weight: 700; font-size: 14px; }
+  .step h3 { margin: 10px 0 8px; font-size: 18px; }
+  .step p { color: var(--muted); font-size: 14.5px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feat { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 26px; }
+  .feat h3 { font-size: 17px; margin-bottom: 8px; }
+  .feat h3::before { content: "▸ "; color: var(--accent); }
+  .feat p { color: var(--muted); font-size: 14.5px; }
+
+  .diagram-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; overflow-x: auto; }
+  .diagram-wrap img { display: block; min-width: 860px; width: 100%; height: auto; }
+  .privacy { margin-top: 72px; background: linear-gradient(135deg, #10231c, #0e1a2b); border: 1px solid #1d3a2e;
+    border-radius: 14px; padding: 40px; text-align: center; }
+  .privacy h2 { font-size: 26px; }
+  .privacy p { color: var(--muted); margin-top: 12px; max-width: 660px; margin-left: auto; margin-right: auto; }
+  .privacy b { color: var(--accent); }
+
+  .pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+  .plan { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 30px; display: flex; flex-direction: column; }
+  .plan.hot { border-color: var(--accent); position: relative; }
+  .plan.hot::after { content: "Popular"; position: absolute; top: -12px; right: 20px; background: var(--accent); color: #06281c;
+    font-size: 12px; font-weight: 700; padding: 2px 12px; border-radius: 99px; }
+  .plan h3 { font-size: 18px; }
+  .plan .price { font-size: 34px; font-weight: 700; margin: 14px 0 2px; }
+  .plan .price small { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .plan ul { list-style: none; margin: 18px 0 24px; flex: 1; }
+  .plan li { color: var(--muted); font-size: 14.5px; padding: 5px 0 5px 22px; position: relative; }
+  .plan li::before { content: "✓"; color: var(--accent); position: absolute; left: 0; }
+  .plan li.soon::before { content: "◷"; color: var(--warn); }
+  .plan .btn { text-align: center; }
+
+  .faq { max-width: 760px; margin: 0 auto; }
+  .faq details { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; margin-bottom: 12px; }
+  .faq summary { cursor: pointer; font-weight: 600; font-size: 15.5px; }
+  .faq details p { color: var(--muted); font-size: 14.5px; margin-top: 12px; }
+
+  footer { margin-top: 88px; border-top: 1px solid var(--border); padding: 32px 0 48px; text-align: center; color: var(--muted); font-size: 13.5px; }
+  @media (max-width: 800px) {
+    .strip, .steps, .grid, .pricing { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="logo">Cursor <span>Token Saver</span></div>
+    <div class="links">
+      <a href="#architecture">Architecture</a>
+      <a href="#concepts">Concepts</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/allengox1994-creator/cursor-token-saver" target="_blank" rel="noopener">GitHub</a>
+      <a href="../">中文</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>Cut Cursor's token bill in half,<br><em>without losing a single byte</em></h1>
+    <p class="sub">
+      LLMs are stateless: every request re-transmits the whole context, and everything resets when the session ends —
+      that burns money, and the agent never learns your project.
+      We add a <b style="color:var(--text)">cognitive layer</b>: a content-addressed evidence store squeezes transmission to the minimum,
+      while verifiable memory, a world model and skill runbooks make it understand you better with every session.
+    </p>
+    <div class="cmd-box"><span class="dollar">$</span><span class="cmd">npx cursor-token-saver init</span></div>
+    <div class="cta-row">
+      <a class="btn primary" href="#pricing">Start free</a>
+      <a class="btn ghost" href="mailto:allengox1994@gmail.com?subject=Pro%20Waitlist">Join the Pro waitlist</a>
+    </div>
+    <p class="note">Savings vary by project — after installing, run <code>cursor-token-saver bench</code> to measure on your own codebase.</p>
+
+    <div class="strip">
+      <div class="cell"><b>Lossless</b><span>Every compression carries an evidence ID; exact recovery any time</span></div>
+      <div class="cell"><b>Fully local</b><span>Hooks, index and memory all stay on your machine; code never leaves</span></div>
+      <div class="cell"><b>One command</b><span>Live right after init, zero config, uninstall any time</span></div>
+    </div>
+  </div>
+
+  <section>
+    <h2 class="sec">How it works</h2>
+    <p class="sec-sub">Built on Cursor's official hooks and MCP interfaces — waste is intercepted at the tool-call layer, no model changes, no code changes.</p>
+    <div class="steps">
+      <div class="step"><span class="n">01</span><h3>Intercept full transmission</h3>
+        <p>Oversized file reads, repeated command output, re-reads of unchanged files — replaced with outlines, diffs or a one-line "unchanged" marker before they ever enter the context.</p></div>
+      <div class="step"><span class="n">02</span><h3>Expand losslessly on demand</h3>
+        <p>Every truncation leaves a stable evidence ID. When the agent truly needs the original, one call recovers any line range exactly — what's saved is waste, not information.</p></div>
+      <div class="step"><span class="n">03</span><h3>Cheaper with every session</h3>
+        <p>Conventions, decisions, hard-won gotchas and deploy flows settle into verifiable memory; a warm-start pack restores full task state in a few hundred tokens.</p></div>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <h2 class="sec">Architecture</h2>
+    <p class="sec-sub">Four layers, one loop: perceive → remember → recall → act → feed back → learn. The green line is the lossless reinjection path — the model receives only a minimal first screen plus evidence IDs.</p>
+    <div class="diagram-wrap">
+      <img src="../architecture-en.svg" alt="Architecture diagram" loading="lazy">
+    </div>
+  </section>
+
+  <section id="concepts">
+    <h2 class="sec">Core concepts</h2>
+    <p class="sec-sub">Not a bag of prompt tricks — a cognitive architecture: perceive → remember → recall → act → feed back → learn.</p>
+    <div class="grid">
+      <div class="feat"><h3>Content-Addressed Evidence</h3>
+        <p>Everything truncated, compacted or diffed is persisted by content hash with a stable evidence ID. The model gets a minimal first screen; any line range recovers exactly by ID — what's eliminated is "transmit everything by default", not information.</p></div>
+      <div class="feat"><h3>Verifiable Semantic Memory</h3>
+        <p>Engineering facts (conventions/decisions/gotchas/entry points) carry content hashes of their linked files: a change flags them STALE automatically; mechanical extraction only creates candidates until confirmed. Memory that trusts itself blindly becomes a liability — verifiability is its lifeline.</p></div>
+      <div class="feat"><h3>Project World Model</h3>
+        <p>Entity —relation→ entity triples extracted automatically from package.json / docker-compose / nginx / CI: domain → port → service → script. Entity subgraph queries in 1–2 hops; one triple line replaces hundreds of config lines.</p></div>
+      <div class="feat"><h3>Procedural Memory</h3>
+        <p>When a task wraps up, a runbook (goal + successful command sequence) is extracted from the command timeline; recurring flows gain confidence. The way human skill memory works is the way agent skill memory should work.</p></div>
+      <div class="feat"><h3>Fail-to-Fix Mining</h3>
+        <p>The same command flips from failing to passing with file edits in between — the system automatically records "command X failed, passed after editing A and B". Pitfalls become experience; you never step in the same hole twice.</p></div>
+      <div class="feat"><h3>Cognitive Loop</h3>
+        <p>Hooks observe reads and commands (perceive) → distill verifiable memory (learn) → search fuses code and memory (recall) → the warm-start pack continues the task (persist). The agent gets cheaper and smarter in your repo.</p></div>
+    </div>
+  </section>
+
+  <section id="features">
+    <h2 class="sec">Six core capabilities</h2>
+    <p class="sec-sub">Every one of them obeys the same iron rule: fail-open — a tool fault never blocks the agent from working.</p>
+    <div class="grid">
+      <div class="feat"><h3>Lossless compressed transport</h3><p>Incremental re-reads send line-level diffs only; repeated commands send just the delta from last time; data files get structural profiles. All recoverable.</p></div>
+      <div class="feat"><h3>Hybrid code retrieval</h3><p>Exact match + BM25 + local neural vectors fused three ways; low confidence widens candidates automatically; previews first, expansion on demand.</p></div>
+      <div class="feat"><h3>Semantic memory</h3><p>Engineering facts stored with file hashes: changed files flag them stale automatically; mechanical extraction only creates candidates until confirmed — hallucinations don't accumulate.</p></div>
+      <div class="feat"><h3>Project world model</h3><p>Domain → port → service relation graphs extracted automatically from package.json / docker-compose / nginx / CI; one triple line replaces hundreds of config lines.</p></div>
+      <div class="feat"><h3>Runbook skills</h3><p>Successful command sequences extracted automatically when tasks wrap up; fail→fix journeys recorded as gotchas — reused directly in the next session.</p></div>
+      <div class="feat"><h3>Global dashboard</h3><p>One view across projects: savings converted to money, waste insights, memory review, retrieval-quality evaluation, one-shot startup.</p></div>
+    </div>
+  </section>
+
+  <div class="privacy">
+    <h2>Your code never leaves your machine</h2>
+    <p>
+      Unlike cloud memory products, <b>the index, embeddings, memory and stats all live locally</b>.
+      Neural embeddings run on local ONNX inference — no telemetry, no phoning home, and license checks are offline signatures too.
+      For compliance-sensitive teams this isn't a feature; it's the precondition.
+    </p>
+  </div>
+
+  <section id="pricing">
+    <h2 class="sec">Pricing</h2>
+    <p class="sec-sub">The free tier is fully functional — not a trial. Paying buys team collaboration and cross-device capabilities.</p>
+    <div class="pricing">
+      <div class="plan">
+        <h3>Free</h3>
+        <div class="price">$0<small> forever</small></div>
+        <ul>
+          <li>All token-saving hooks and MCP tools</li>
+          <li>Local semantic memory + world model</li>
+          <li>Single-machine global dashboard and stats</li>
+          <li>Benchmarks and retrieval evaluation</li>
+        </ul>
+        <a class="btn ghost cmd" href="#top">npx cursor-token-saver init</a>
+      </div>
+      <div class="plan hot">
+        <h3>Pro</h3>
+        <div class="price">$12<small> /mo</small></div>
+        <ul>
+          <li>Everything in Free</li>
+          <li class="soon">Memory sync across devices</li>
+          <li class="soon">Enhanced cost analytics and budget alerts</li>
+          <li class="soon">Priority support</li>
+        </ul>
+        <a class="btn primary" href="mailto:allengox1994@gmail.com?subject=Pro%20Waitlist">Join the waitlist</a>
+      </div>
+      <div class="plan">
+        <h3>Team</h3>
+        <div class="price">$25<small> /user/mo</small></div>
+        <ul>
+          <li>Everything in Pro</li>
+          <li class="soon">Shared team memory vault (new hires inherit the whole team's experience)</li>
+          <li class="soon">Team cost dashboards and governance permissions</li>
+          <li class="soon">Self-hosted deployment</li>
+        </ul>
+        <a class="btn ghost" href="mailto:allengox1994@gmail.com?subject=Team%20Inquiry">Contact us</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <h2 class="sec">FAQ</h2>
+    <p class="sec-sub"></p>
+    <div class="faq">
+      <details>
+        <summary>Will it make the agent dumber?</summary>
+        <p>No — that's the first constraint of the whole design. Every compression is lossless: truncations leave evidence IDs, and one call recovers any range of the original exactly. Retrieval fuses three paths with automatic fallbacks, and LSP degrades to the import graph when unavailable. The rules explicitly steer the agent to "expand when unsure" instead of guessing.</p>
+      </details>
+      <details>
+        <summary>Are the advertised savings credible?</summary>
+        <p>We don't publish one universal number, because savings depend on your project and your mix of operations. After installing, run <code>cursor-token-saver bench</code>: it replays six typical operations on your real codebase and produces a comparison report with a full methodology statement — it measures transport-layer tokens and promises no billing reduction.</p>
+      </details>
+      <details>
+        <summary>Won't the memory accumulate wrong information?</summary>
+        <p>Everything mechanically extracted is a "candidate" that only takes effect after the agent or you confirm it; file-linked memories store content hashes and are flagged stale automatically when files change; long-unused entries are archived. Every entry is viewable, editable and deletable on the dashboard.</p>
+      </details>
+      <details>
+        <summary>Does it uninstall cleanly?</summary>
+        <p>All files live under the project's .cursor/ directory and ~/.cursor-token-saver/ — delete them and it's fully gone, without touching your code or git history.</p>
+      </details>
+      <details>
+        <summary>Will a Cursor update break it?</summary>
+        <p>All hooks are fail-open: any exception lets the original operation through. The worst case is falling back to the pre-install state — it will never block your work.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    Cursor Token Saver · Fully local · No telemetry · <a href="https://github.com/allengox1994-creator/cursor-token-saver" target="_blank" rel="noopener">GitHub</a> · <a href="mailto:allengox1994@gmail.com">Contact</a>
+  </footer>
+</div>
+</body>
+</html>
