@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cursor Token Saver — 无损省 token · 跨会话记忆 · 全本地</title>
-<meta name="description" content="Cursor 的无损省 token 工具包：增量重读、输出差分、结果去重、语义记忆、世界模型。全部本地运行，代码不出机器。">
+<title>Cursor Token Saver — 给 AI 编码 agent 的认知层：无损省 token · 可验证记忆 · 世界模型</title>
+<meta name="description" content="为 Cursor agent 补上认知层：内容寻址证据库无损省 token；可验证语义记忆、项目世界模型、技能 Runbook 让 agent 跨会话越用越懂你的项目。全部本地运行，零遥测。">
 <style>
   :root {
     --bg: #0b0e14; --panel: #131822; --border: #232b3a; --text: #dbe2ee;
@@ -55,6 +55,8 @@
   .feat { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 26px; }
   .feat h3 { font-size: 17px; margin-bottom: 8px; }
   .feat h3::before { content: "▸ "; color: var(--accent); }
+  .feat h3 .en { display: block; margin-left: 1.1em; color: var(--muted); font-size: 12px; font-weight: 400;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.3px; }
   .feat p { color: var(--muted); font-size: 14.5px; }
 
   .privacy { margin-top: 72px; background: linear-gradient(135deg, #10231c, #0e1a2b); border: 1px solid #1d3a2e;
@@ -94,6 +96,7 @@
   <nav>
     <div class="logo">Cursor <span>Token Saver</span></div>
     <div class="links">
+      <a href="#concepts">概念</a>
       <a href="#features">功能</a>
       <a href="#pricing">定价</a>
       <a href="#faq">FAQ</a>
@@ -104,8 +107,9 @@
   <div class="hero">
     <h1>让 Cursor 少花一半 token，<br><em>且不丢一个字节的信息</em></h1>
     <p class="sub">
-      增量重读、输出差分、结果去重、内容寻址证据库——所有截断都可无损恢复。
-      再加上跨会话语义记忆和项目世界模型，agent 越用越懂你的项目。
+      LLM 是无状态的：每次请求重传全部上下文，会话一结束一切归零——这既烧钱，又让 agent 永远学不会你的项目。
+      我们给它补上<b style="color:var(--text)">认知层</b>：内容寻址证据库把传输压到最低，
+      可验证记忆、世界模型与技能 Runbook 让它跨会话越用越懂你。
     </p>
     <div class="cmd-box"><span class="dollar">$</span><span class="cmd">npx cursor-token-saver init</span></div>
     <div class="cta-row">
@@ -131,6 +135,25 @@
         <p>每次截断都留下稳定的证据 ID。agent 真需要原文时，一次调用精确恢复任意行区间——省的是浪费，不是信息。</p></div>
       <div class="step"><span class="n">03</span><h3>跨会话越用越省</h3>
         <p>约定、决策、踩过的坑、部署流程沉淀为可验证的记忆；新会话热启动包用几百 token 恢复全部任务状态。</p></div>
+    </div>
+  </section>
+
+  <section id="concepts">
+    <h2 class="sec">核心概念</h2>
+    <p class="sec-sub">这不是一堆提示词技巧，而是一套认知架构（Cognitive Architecture）：感知 → 记忆 → 回忆 → 行动 → 反馈 → 学习。</p>
+    <div class="grid">
+      <div class="feat"><h3>内容寻址证据库 <span class="en">Content-Addressed Evidence</span></h3>
+        <p>所有被截断/压缩/差分的内容按内容哈希落盘，生成稳定证据 ID。模型默认只收最小首屏，任意行区间可按 ID 精确恢复——省的是"默认全量传输"，不是信息。</p></div>
+      <div class="feat"><h3>可验证语义记忆 <span class="en">Verifiable Semantic Memory</span></h3>
+        <p>工程事实（约定/决策/坑/入口）挂关联文件的内容哈希：文件一变自动标 STALE；机械提取只是候选，确认才生效。"存了就信"的记忆迟早变成负资产，可验证性是记忆系统的生命线。</p></div>
+      <div class="feat"><h3>项目世界模型 <span class="en">Project World Model</span></h3>
+        <p>自动从 package.json / docker-compose / nginx / CI 提取「实体 --关系--> 实体」三元组：域名→端口→服务→脚本。实体子图一到两跳查询，一行三元组顶几百行配置文件。</p></div>
+      <div class="feat"><h3>程序性技能记忆 <span class="en">Procedural Memory</span></h3>
+        <p>任务收尾自动从命令时间线提取 Runbook（目标 + 成功命令序列）；同一流程复发时置信度上升。人类的技能记忆如何工作，agent 的就该如何工作。</p></div>
+      <div class="feat"><h3>失败→修复挖掘 <span class="en">Fail-to-Fix Mining</span></h3>
+        <p>同一命令从失败转成功、期间又有文件编辑——系统自动记下"命令 X 曾失败，改了 A、B 之后通过"。踩过的坑沉淀为经验，不踩第二次。</p></div>
+      <div class="feat"><h3>认知闭环 <span class="en">Cognitive Loop</span></h3>
+        <p>hooks 观测读写与命令（感知）→ 沉淀可验证记忆（学习）→ 检索融合代码与记忆（回忆）→ 热启动包延续任务（延续）。agent 在你的项目里越用越便宜、越用越懂。</p></div>
     </div>
   </section>
 
