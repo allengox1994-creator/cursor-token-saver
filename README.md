@@ -27,52 +27,7 @@ hooks 观测每次文件读取和命令执行（感知），沉淀为可验证�
 
 ### 运行原理图
 
-```mermaid
-flowchart LR
-    A["🤖 Cursor Agent<br/>无状态 LLM<br/><i>读文件 · 跑命令 · 改代码</i>"]
-
-    subgraph P["① 感知层 · Hooks（fail-open）"]
-        direction TB
-        RG["read-guard<br/><i>拦超大读 · 增量重读</i>"]
-        SG["shell-guard<br/><i>日志治理 · 输出差分</i>"]
-        EI["edit-invalidate<br/><i>编辑追踪</i>"]
-        SA["shell-audit<br/><i>退出码 · 失败观测</i>"]
-        ST["session-track<br/><i>会话生命周期 · 自动扫描</i>"]
-    end
-
-    subgraph M["② 认知层 · 三层可验证记忆"]
-        direction TB
-        SEM["语义记忆 · 事实层<br/><i>约定 / 决策 / 坑 / 入口</i>"]
-        WM["世界模型 · 关系层<br/><i>实体 —关系→ 实体 三元组</i>"]
-        SK["技能 Runbook · 程序层<br/><i>目标 + 成功命令序列</i>"]
-        GOV["治理：候选→确认 · STALE 检测 · 衰减/置信度<br/><i>机器不伪造 · 不自我确认</i>"]
-    end
-
-    subgraph E["③ 证据层 · 内容寻址存储"]
-        EV["src_/art_ 稳定证据 ID（内容哈希）<br/>无损差分 · 全量 artifact 落盘<br/><i>只延迟传输 · 不删除信息</i>"]
-    end
-
-    subgraph R["④ 回忆层 · 统一查询（MCP）"]
-        direction TB
-        CQ["context_query<br/><i>检索融合：代码 + 记忆</i>"]
-        WQ["mode=world<br/><i>实体关系子图（1-2 跳）</i>"]
-        BS["bootstrap<br/><i>热启动包：几百 token 续任务</i>"]
-        CE["context_expand<br/><i>按 ID 无损恢复原文</i>"]
-    end
-
-    DB["📊 全局面板<br/><i>记忆审阅 · 浪费洞察 · 省钱统计 · 基准测试</i>"]
-
-    A -->|"感知：工具调用被观测"| P
-    P -->|"机械提取：失败→修复 · Runbook · 世界扫描"| M
-    P -->|"全量落盘"| E
-    M -->|"挂证据哈希"| E
-    M -->|"召回"| R
-    E -->|"按 ID 精确恢复"| R
-    R ==>|"行动：最小首屏 + 证据 ID（无损回注）"| A
-    P -.->|"事件流"| DB
-    M -.->|"治理"| DB
-    E -.->|"度量"| DB
-```
+![框架运行原理图](https://raw.githubusercontent.com/allengox1994-creator/cursor-token-saver/main/site/architecture.svg)
 
 闭环：**感知 → 记忆 → 回忆 → 行动 → 反馈 → 学习**。绿色粗线是无损回注主路径——模型只收最小首屏和证据 ID，其余一切按需精确恢复。
 
