@@ -158,7 +158,7 @@ cursor-token-saver start-all
 
 `cursor-token-saver license` 提供离线授权：Ed25519 签名校验，**无需联网激活、无遥测**。`activate <key>` 激活、`status` 查看、`deactivate` 移除；供应商侧用 `issue --email ... --plan pro|team --days 365` 签发（私钥在 `~/.cursor-token-saver/vendor-private.pem`，**绝不能进仓库，务必备份**）。当前免费版功能完整可用，授权状态仅作标识，付费功能（记忆同步、团队记忆库）接入时按 `licenseStatus()` 判定。
 
-落地页在 `site/index.html`，纯静态零依赖，可直接部署到 GitHub Pages / Vercel。仓库：<https://github.com/allengox1994-creator/cursor-token-saver>，联系：<allengox1994@gmail.com>。
+落地页：<https://allengox1994-creator.github.io/cursor-token-saver/>（源码在 `site/index.html`，push 到 main 自动部署）。仓库：<https://github.com/allengox1994-creator/cursor-token-saver>，联系：<allengox1994@gmail.com>。
 
 ## 为什么不会影响 agent 能力
 
