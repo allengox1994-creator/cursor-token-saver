@@ -1,4 +1,4 @@
-/* global Chart */
+/* global Chart, tr, trSuggestion */
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n) => (typeof n === 'number' ? n.toLocaleString('en-US') : '0');
 const kb = (n) => `${((n || 0) / 1024).toFixed(1)} KB`;
@@ -91,7 +91,8 @@ async function loadSettings() {
   for (const p of PRICE_PRESETS) {
     const o = document.createElement('option');
     o.value = p.name;
-    o.textContent = p.price != null ? `${p.name} ($${p.price}/M)` : p.name;
+    const disp = tr(p.name);
+    o.textContent = p.price != null ? `${disp} ($${p.price}/M)` : disp;
     sel.appendChild(o);
   }
   sel.value = PRICE_PRESETS.some((p) => p.name === settings.priceName) ? settings.priceName : '自定义';
@@ -118,10 +119,10 @@ $('#price-save').addEventListener('click', async () => {
   const data = await res.json();
   if (data.ok) {
     settings = data.settings;
-    $('#price-msg').textContent = '已保存';
+    $('#price-msg').textContent = tr('已保存');
     loadStats();
   } else {
-    $('#price-msg').textContent = '保存失败';
+    $('#price-msg').textContent = tr('保存失败');
   }
   setTimeout(() => ($('#price-msg').textContent = ''), 3000);
 });
@@ -131,7 +132,7 @@ async function loadProjects() {
   const data = await (await fetch('/api/projects')).json();
   const sel = $('#project-select');
   const prev = currentProject;
-  sel.innerHTML = '<option value="all">全部项目</option>';
+  sel.innerHTML = `<option value="all">${tr('全部项目')}</option>`;
   for (const p of data.projects) {
     const optEl = document.createElement('option');
     optEl.value = p.path;
@@ -160,19 +161,19 @@ $('#project-select').addEventListener('change', (ev) => switchProject(ev.target.
 $('#project-remove').addEventListener('click', async () => {
   if (currentProject === 'all') return;
   const name = $('#project-select').selectedOptions[0]?.textContent || currentProject;
-  if (!confirm(`从面板剔除「${name}」？\n\n只是不再聚合展示，项目里的 hooks、配置和统计不受影响，新会话也不会自动加回。想恢复时在该项目重跑 cursor-token-saver init。`)) return;
+  if (!confirm(tr('从面板剔除「{0}」？\n\n只是不再聚合展示，项目里的 hooks、配置和统计不受影响，新会话也不会自动加回。想恢复时在该项目重跑 cursor-token-saver init。', name))) return;
   const res = await fetch('/api/projects?project=' + encodeURIComponent(currentProject), { method: 'DELETE' });
   const data = await res.json();
   if (data.ok) {
     await loadProjects();
     switchProject('all');
   } else {
-    alert('剔除失败: ' + (data.error || res.status));
+    alert(tr('剔除失败: ') + (data.error || res.status));
   }
 });
 
 /* ---------- tabs ---------- */
-document.querySelectorAll('.tab-btn').forEach((btn) => {
+document.querySelectorAll('.tab-btn[data-tab]').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
     document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
@@ -207,19 +208,19 @@ async function loadStats() {
     ptbody.innerHTML = '';
     for (const p of s.perProject || []) {
       const m = money(p.totals.savedTokens);
-      const tr = document.createElement('tr');
-      tr.className = 'clickable';
-      tr.innerHTML =
+      const row = document.createElement('tr');
+      row.className = 'clickable';
+      row.innerHTML =
         `<td title="${escapeHtml(p.path)}">${escapeHtml(p.name)}</td>` +
         `<td class="num">${fmt(p.totals.savedTokens)}</td>` +
         `<td class="num">${m.cny}</td>` +
         `<td class="num">${fmt(p.totals.denies)}</td>` +
         `<td class="num">${fmt(p.totals.caps + p.totals.truncates)}</td>` +
         `<td class="num">${fmt(p.totals.events)}</td>` +
-        `<td class="muted" title="${escapeHtml(p.embedModel || '')}">${escapeHtml(shortModel(p.embedModel) || '未建索引')}</td>` +
+        `<td class="muted" title="${escapeHtml(p.embedModel || '')}">${escapeHtml(shortModel(p.embedModel) || tr('未建索引'))}</td>` +
         `<td class="muted">${(p.lastEventTs || '').replace('T', ' ').slice(5, 16)}</td>`;
-      tr.addEventListener('click', () => switchProject(p.path));
-      ptbody.appendChild(tr);
+      row.addEventListener('click', () => switchProject(p.path));
+      ptbody.appendChild(row);
     }
   }
 
@@ -230,19 +231,19 @@ async function loadStats() {
       ? [s.embedModel]
       : [];
   $('#embed-model-line').textContent =
-    models.length > 0 ? `· 语义搜索模型: ${models.map(shortModel).join(', ')}` : '· 语义搜索索引未建立';
+    models.length > 0 ? tr('· 语义搜索模型: {0}', models.map(shortModel).join(', ')) : tr('· 语义搜索索引未建立');
 
   $('#c-saved').textContent = fmt(s.totals.savedTokens);
   const m = money(s.totals.savedTokens);
-  $('#c-saved-money').textContent = `≈ ${m.cny} (${m.usd} · 按 ${settings.priceName} 输入价)`;
-  $('#c-saved-bytes').textContent = `≈ ${kb(s.totals.savedBytes)} 原始内容`;
+  $('#c-saved-money').textContent = tr('≈ {0} ({1} · 按 {2} 输入价)', m.cny, m.usd, settings.priceName);
+  $('#c-saved-bytes').textContent = tr('≈ {0} 原始内容', kb(s.totals.savedBytes));
   $('#c-denies').textContent = fmt(s.totals.denies);
   $('#c-truncs').textContent = fmt(s.totals.caps + s.totals.truncates);
   $('#c-sessions').textContent = `${fmt(s.totals.sessions)} / ${fmt(s.totals.compactions)}`;
   const lastCompact = s.compactions[s.compactions.length - 1];
   $('#c-compact-hint').textContent = lastCompact
-    ? `最近压缩时上下文 ${fmt(lastCompact.context_tokens)} tokens`
-    : '尚无压缩事件';
+    ? tr('最近压缩时上下文 {0} tokens', fmt(lastCompact.context_tokens))
+    : tr('尚无压缩事件');
 
   charts.forEach((c) => c.destroy());
   charts = [];
@@ -252,7 +253,7 @@ async function loadStats() {
     data: {
       labels: s.daily.map((d) => d.date),
       datasets: [{
-        label: '节省 tokens',
+        label: tr('节省 tokens'),
         data: s.daily.map((d) => d.savedTokens),
         borderColor: '#4ade80',
         backgroundColor: 'rgba(74,222,128,0.15)',
@@ -273,7 +274,7 @@ async function loadStats() {
   makeChart('#chart-actions', {
     type: 'doughnut',
     data: {
-      labels: actionEntries.map(([a]) => ACTION_LABELS[a][0]),
+      labels: actionEntries.map(([a]) => tr(ACTION_LABELS[a][0])),
       datasets: [{
         data: actionEntries.map(([, n]) => n),
         backgroundColor: ['#4ade80', '#f87171', '#60a5fa', '#fbbf24', '#a78bfa', '#f472b6', '#34d399', '#fb923c', '#94a3b8'],
@@ -287,7 +288,7 @@ async function loadStats() {
     type: 'bar',
     data: {
       labels: s.topFiles.map((f) => f.file.split('/').pop()),
-      datasets: [{ label: '节省 tokens', data: s.topFiles.map((f) => f.savedTokens), backgroundColor: '#4ade80' }]
+      datasets: [{ label: tr('节省 tokens'), data: s.topFiles.map((f) => f.savedTokens), backgroundColor: '#4ade80' }]
     },
     options: {
       indexAxis: 'y',
@@ -303,7 +304,7 @@ async function loadStats() {
     type: 'bar',
     data: {
       labels: s.topCommands.map((c) => (c.command.length > 30 ? c.command.slice(0, 30) + '…' : c.command)),
-      datasets: [{ label: '输出字节', data: s.topCommands.map((c) => c.bytes), backgroundColor: '#60a5fa' }]
+      datasets: [{ label: tr('输出字节'), data: s.topCommands.map((c) => c.bytes), backgroundColor: '#60a5fa' }]
     },
     options: {
       indexAxis: 'y',
@@ -321,15 +322,15 @@ async function loadStats() {
     const [label, cls] = ACTION_LABELS[e.action] || [e.action, 'info'];
     const obj = e.file || e.command || e.evidenceId || e.artifactId || e.logPath ||
       (e.action === 'compact' ? `${fmt(e.context_tokens)} tokens (${e.context_usage_percent}%)` : '') || '';
-    const tr = document.createElement('tr');
-    tr.innerHTML =
+    const row = document.createElement('tr');
+    row.innerHTML =
       `<td>${(e.ts || '').replace('T', ' ').slice(5, 19)}</td>` +
       `<td class="col-project">${escapeHtml(e.project || '')}</td>` +
       `<td>${e.hook || ''}</td>` +
-      `<td><span class="badge ${cls}">${label}</span></td>` +
+      `<td><span class="badge ${cls}">${tr(label)}</span></td>` +
       `<td class="obj" title="${escapeHtml(obj)}">${escapeHtml(obj)}</td>` +
       `<td class="num">${e.savedTokens ? fmt(e.savedTokens) : ''}</td>`;
-    tbody.appendChild(tr);
+    tbody.appendChild(row);
   }
 }
 
@@ -350,35 +351,35 @@ function renderAutoStatus(auto) {
   const el = $('#i-auto');
   const sub = $('#i-auto-sub');
   if (!auto) {
-    el.textContent = '未运行';
-    sub.textContent = 'MCP 服务器（随 Cursor 打开项目启动）还没写过心跳';
+    el.textContent = tr('未运行');
+    sub.textContent = tr('MCP 服务器（随 Cursor 打开项目启动）还没写过心跳');
     return;
   }
   if (!auto.alive) {
-    el.textContent = '已停止';
-    sub.textContent = 'MCP 服务器进程不在了——重启 Cursor 或在 MCP 设置里刷新';
+    el.textContent = tr('已停止');
+    sub.textContent = tr('MCP 服务器进程不在了——重启 Cursor 或在 MCP 设置里刷新');
     return;
   }
   if (auto.needsRestart) {
-    el.textContent = '脚本已升级，待重启';
-    sub.textContent = '刷新该项目的 repo-map MCP 后加载新代码';
+    el.textContent = tr('脚本已升级，待重启');
+    sub.textContent = tr('刷新该项目的 repo-map MCP 后加载新代码');
     return;
   }
   const STATE = {
-    ready: '运行中',
-    building: '建索引中…',
-    disabled: '已禁用 (autoIndex=false)',
-    'no-backend': '无嵌入后端',
-    error: '出错',
-    idle: '等待首次检查'
+    ready: tr('运行中'),
+    building: tr('建索引中…'),
+    disabled: tr('已禁用 (autoIndex=false)'),
+    'no-backend': tr('无嵌入后端'),
+    error: tr('出错'),
+    idle: tr('等待首次检查')
   };
   el.textContent =
-    auto.state === 'building' && auto.total > 0 ? `建索引中… ${auto.done}/${auto.total}` : STATE[auto.state] || auto.state;
+    auto.state === 'building' && auto.total > 0 ? tr('建索引中… {0}/{1}', auto.done, auto.total) : STATE[auto.state] || auto.state;
   const parts = [];
-  if (auto.lastCheck) parts.push('上次检查 ' + new Date(auto.lastCheck).toLocaleTimeString());
-  if (auto.lastBuild) parts.push('上次重建 ' + new Date(auto.lastBuild).toLocaleTimeString() + `（${auto.embedded} 个文件）`);
+  if (auto.lastCheck) parts.push(tr('上次检查 {0}', new Date(auto.lastCheck).toLocaleTimeString()));
+  if (auto.lastBuild) parts.push(tr('上次重建 {0}（{1} 个文件）', new Date(auto.lastBuild).toLocaleTimeString(), auto.embedded));
   if (auto.error) parts.push(auto.error);
-  sub.textContent = parts.join(' · ') || '每 5 分钟自动检查一次';
+  sub.textContent = parts.join(' · ') || tr('每 5 分钟自动检查一次');
 }
 
 async function loadIndexView() {
@@ -395,19 +396,19 @@ async function loadIndexView() {
     return;
   }
   renderAutoStatus(data.auto);
-  $('#i-model').textContent = shortModel(data.model) || '未知';
-  $('#i-updated').textContent = '更新于 ' + new Date(data.updatedAt).toLocaleString();
+  $('#i-model').textContent = shortModel(data.model) || tr('未知');
+  $('#i-updated').textContent = tr('更新于 {0}', new Date(data.updatedAt).toLocaleString());
   const t = data.totals;
   $('#i-files').textContent = `${fmt(t.ok + t.stale + t.deleted)} / ${fmt(t.chunks)}`;
-  $('#i-size').textContent = '索引体积 ' + kb(data.sizeBytes);
+  $('#i-size').textContent = tr('索引体积 {0}', kb(data.sizeBytes));
   const pending = t.stale + t.new + t.deleted;
-  $('#i-health').textContent = pending === 0 ? '全部新鲜' : `${fmt(pending)} 项待同步`;
-  let healthSub = '语义搜索结果为最新代码';
+  $('#i-health').textContent = pending === 0 ? tr('全部新鲜') : tr('{0} 项待同步', fmt(pending));
+  let healthSub = tr('语义搜索结果为最新代码');
   if (pending > 0) {
-    const detail = `待刷新 ${t.stale} · 未索引 ${t.new} · 已删除 ${t.deleted}`;
-    if (data.auto?.alive && data.auto.state === 'building') healthSub = detail + '——正在建索引，完成后自动消化';
-    else if (data.auto?.alive) healthSub = detail + '——自动检查每 5 分钟一次，最迟 5 分钟内重嵌';
-    else healthSub = detail + '——自动索引未运行，重启 Cursor 后会处理';
+    const detail = tr('待刷新 {0} · 未索引 {1} · 已删除 {2}', t.stale, t.new, t.deleted);
+    if (data.auto?.alive && data.auto.state === 'building') healthSub = detail + tr('——正在建索引，完成后自动消化');
+    else if (data.auto?.alive) healthSub = detail + tr('——自动检查每 5 分钟一次，最迟 5 分钟内重嵌');
+    else healthSub = detail + tr('——自动索引未运行，重启 Cursor 后会处理');
   }
   $('#i-health-sub').textContent = healthSub;
   indexFiles = data.files;
@@ -422,13 +423,13 @@ function renderIndexTable() {
     .slice(0, 300)
     .map((f) => {
       const [label, cls] = INDEX_STATUS[f.status] || [f.status, 'info'];
-      return `<tr><td>${escapeHtml(f.rel)}</td><td class="num">${f.chunks || '-'}</td><td><span class="badge ${cls}">${label}</span></td></tr>`;
+      return `<tr><td>${escapeHtml(f.rel)}</td><td class="num">${f.chunks || '-'}</td><td><span class="badge ${cls}">${tr(label)}</span></td></tr>`;
     })
     .join('');
   if (rows.length > 300) {
-    tbody.innerHTML += `<tr><td colspan="3" class="obj">… 另有 ${fmt(rows.length - 300)} 个文件，可用过滤框缩小范围</td></tr>`;
+    tbody.innerHTML += `<tr><td colspan="3" class="obj">${tr('… 另有 {0} 个文件，可用过滤框缩小范围', fmt(rows.length - 300))}</td></tr>`;
   }
-  if (!rows.length) tbody.innerHTML = '<tr><td colspan="3" class="obj">没有匹配的文件</td></tr>';
+  if (!rows.length) tbody.innerHTML = `<tr><td colspan="3" class="obj">${tr('没有匹配的文件')}</td></tr>`;
 }
 
 $('#index-filter').addEventListener('input', renderIndexTable);
@@ -447,61 +448,63 @@ async function loadContextView() {
   const data = await (await fetch('/api/context?project=' + encodeURIComponent(currentProject))).json();
   if (data.error) return;
   $('#x-entries').textContent = fmt(data.store.entries);
-  $('#x-entry-sub').textContent =
-    `源码引用 ${fmt(data.store.sourceEntries)} · artifact ${fmt(data.store.artifacts)} · ` +
-    `去重命中 ${fmt(data.metrics?.dedupHits)} · 展开 ${fmt(data.metrics?.expands)}`;
+  $('#x-entry-sub').textContent = tr(
+    '源码引用 {0} · artifact {1} · 去重命中 {2} · 展开 {3}',
+    fmt(data.store.sourceEntries), fmt(data.store.artifacts), fmt(data.metrics?.dedupHits), fmt(data.metrics?.expands)
+  );
   $('#x-bytes').textContent = kb(data.store.bytes);
   $('#x-budget').textContent = fmt(data.budget.maxUsedTokens);
-  $('#x-budget-sub').textContent =
-    `${fmt(data.budget.sessions)} 个会话 · 合计 ${fmt(data.budget.usedTokens)} tokens · ` +
-    `传输 ${kb(data.metrics?.transmittedBytes)} / 原始 ${kb(data.metrics?.originalBytes)}`;
+  $('#x-budget-sub').textContent = tr(
+    '{0} 个会话 · 合计 {1} tokens · 传输 {2} / 原始 {3}',
+    fmt(data.budget.sessions), fmt(data.budget.usedTokens), kb(data.metrics?.transmittedBytes), kb(data.metrics?.originalBytes)
+  );
   $('#x-checkpoints').textContent = fmt(data.checkpoints);
-  $('#x-daemon').textContent = data.daemon?.alive ? '运行中' : '未运行';
+  $('#x-daemon').textContent = data.daemon?.alive ? tr('运行中') : tr('未运行');
   $('#x-daemon-sub').textContent = data.daemon?.alive
-    ? `PID ${data.daemon.pid} · 127.0.0.1:${data.daemon.port} · 所有项目共享模型`
-    : '首次神经检索时自动启动；失败立即回退项目内模型';
+    ? tr('PID {0} · 127.0.0.1:{1} · 所有项目共享模型', data.daemon.pid, data.daemon.port)
+    : tr('首次神经检索时自动启动；失败立即回退项目内模型');
   const evalState = data.evaluationStatus?.state;
   if (evalState === 'scheduled') {
-    $('#x-eval').textContent = '已自动计划';
-    $('#x-eval-sub').textContent = `预计 ${new Date(data.evaluationStatus.dueAt).toLocaleString()} 后台低优先级运行`;
+    $('#x-eval').textContent = tr('已自动计划');
+    $('#x-eval-sub').textContent = tr('预计 {0} 后台低优先级运行', new Date(data.evaluationStatus.dueAt).toLocaleString());
   } else if (evalState === 'starting' || evalState === 'waiting' || evalState === 'running') {
-    $('#x-eval').textContent = '自动评测中…';
-    $('#x-eval-sub').textContent = '不阻塞 Agent；完成后这里自动显示 Hit@K / MRR';
+    $('#x-eval').textContent = tr('自动评测中…');
+    $('#x-eval-sub').textContent = tr('不阻塞 Agent；完成后这里自动显示 Hit@K / MRR');
   } else if (evalState === 'disabled') {
-    $('#x-eval').textContent = '已关闭';
-    $('#x-eval-sub').textContent = '可在配置页重新开启索引变化后自动评测';
+    $('#x-eval').textContent = tr('已关闭');
+    $('#x-eval-sub').textContent = tr('可在配置页重新开启索引变化后自动评测');
   } else if (evalState === 'error') {
-    $('#x-eval').textContent = '评测失败';
-    $('#x-eval-sub').textContent = data.evaluationStatus.error || '失败不影响索引和正常检索';
+    $('#x-eval').textContent = tr('评测失败');
+    $('#x-eval-sub').textContent = data.evaluationStatus.error || tr('失败不影响索引和正常检索');
   } else {
-    $('#x-eval').textContent = data.evaluation ? `Hit@5 ${(data.evaluation.hitAt5 * 100).toFixed(1)}%` : '等待索引变化';
+    $('#x-eval').textContent = data.evaluation ? `Hit@5 ${(data.evaluation.hitAt5 * 100).toFixed(1)}%` : tr('等待索引变化');
     $('#x-eval-sub').textContent = data.evaluation
       ? `${fmt(data.evaluation.cases)} queries · Hit@1 ${(data.evaluation.hitAt1 * 100).toFixed(1)}% · MRR ${data.evaluation.mrr.toFixed(3)}`
-      : '索引首次构建或增量刷新后会自动后台评测';
+      : tr('索引首次构建或增量刷新后会自动后台评测');
   }
   const tbody = $('#context-table tbody');
   tbody.innerHTML = (data.recent || [])
     .map(
       (e) =>
         `<tr><td><code>${escapeHtml(e.id)}</code></td><td>${escapeHtml(e.kind || '')}</td>` +
-        `<td class="obj">${escapeHtml(e.rel || '本地 artifact')}</td><td class="num">${kb(e.bytes)}</td>` +
+        `<td class="obj">${escapeHtml(e.rel || tr('本地 artifact'))}</td><td class="num">${kb(e.bytes)}</td>` +
         `<td class="muted">${new Date(e.accessedAt || e.createdAt).toLocaleString()}</td></tr>`
     )
     .join('');
-  if (!data.recent?.length) tbody.innerHTML = '<tr><td colspan="5" class="obj">还没有证据；调用 context_query 后会出现在这里</td></tr>';
+  if (!data.recent?.length) tbody.innerHTML = `<tr><td colspan="5" class="obj">${tr('还没有证据；调用 context_query 后会出现在这里')}</td></tr>`;
 }
 
 /* ---------- waste insights ---------- */
 async function loadWasteView() {
   const data = await (await fetch('/api/waste?project=' + encodeURIComponent(currentProject))).json();
   if (data.error) return;
-  $('#waste-window').textContent = `（最近 ${data.windowDays} 天，支持全部项目聚合）`;
+  $('#waste-window').textContent = tr('（最近 {0} 天，支持全部项目聚合）', data.windowDays);
 
   const ul = $('#waste-suggestions');
   ul.innerHTML = '';
   for (const s of data.suggestions) {
     const li = document.createElement('li');
-    li.textContent = s;
+    li.textContent = trSuggestion(s);
     ul.appendChild(li);
   }
 
@@ -527,7 +530,7 @@ async function loadWasteView() {
     (r) =>
       `<td class="obj" title="${escapeHtml(r.file)}">${escapeHtml(r.file)}</td>` +
       `<td class="num">${r.count}</td><td class="num">${kb(r.bytes)}</td><td class="num">${kb(r.wastedBytes)}</td>`,
-    '没有发现频繁重读的文件'
+    tr('没有发现频繁重读的文件')
   );
   fill(
     '#waste-commands',
@@ -535,13 +538,13 @@ async function loadWasteView() {
     (r) =>
       `<td class="obj" title="${escapeHtml(r.command)}">${escapeHtml(r.command)}</td>` +
       `<td class="num">${r.count}</td><td class="num">${kb(r.bytes)}</td>`,
-    '没有发现未治理的高噪音命令'
+    tr('没有发现未治理的高噪音命令')
   );
   fill(
     '#waste-overrides',
     data.topOverrides,
     (r) => `<td class="obj" title="${escapeHtml(r.file)}">${escapeHtml(r.file)}</td><td class="num">${r.count}</td>`,
-    '没有发生过 override（拦截判断都被接受）'
+    tr('没有发生过 override（拦截判断都被接受）')
   );
 }
 
@@ -561,44 +564,44 @@ async function loadMemoryView() {
   $('#mem-never').textContent = st.neverRecalled ?? 0;
   $('#mem-stale').textContent = st.stale ?? 0;
   $('#mem-world').textContent = `${st.relations ?? 0} / ${st.skills ?? 0}`;
-  $('#mem-skill-reuse').textContent = `技能累计复用 ${st.skillReuse ?? 0} 次`;
+  $('#mem-skill-reuse').textContent = tr('技能累计复用 {0} 次', st.skillReuse ?? 0);
   const tbody = $('#memory-table tbody');
   tbody.innerHTML = '';
   if (!data.memories.length) {
     tbody.innerHTML =
-      '<tr><td colspan="7" class="obj">还没有记忆。agent 调用 memory_save 或保存带决策的 checkpoint 后会出现在这里。</td></tr>';
+      `<tr><td colspan="7" class="obj">${tr('还没有记忆。agent 调用 memory_save 或保存带决策的 checkpoint 后会出现在这里。')}</td></tr>`;
     return;
   }
   for (const m of data.memories) {
     const status =
       m.status === 'archived'
-        ? '<span class="muted">归档</span>'
-        : (m.status === 'candidate' ? '<span class="mem-candidate">候选</span>' : '<span class="mem-active">生效</span>') +
-          (m.stale ? ' <span class="mem-stale">过期</span>' : '');
+        ? `<span class="muted">${tr('已归档')}</span>`
+        : (m.status === 'candidate' ? `<span class="mem-candidate">${tr('候选')}</span>` : `<span class="mem-active">${tr('生效')}</span>`) +
+          (m.stale ? ` <span class="mem-stale">${tr('过期')}</span>` : '');
     const files = (m.files || []).map((f) => f.path).join(', ');
     const extra =
       m.kind === 'skill' && (m.steps || []).length
         ? m.steps.map((s, i) => `${i + 1}) ${s}`).join('　')
         : files;
-    const conf = (m.confidence || 1) > 1 ? ` <span class="mem-candidate" title="机械提取复发次数">×${m.confidence}</span>` : '';
+    const conf = (m.confidence || 1) > 1 ? ` <span class="mem-candidate" title="${tr('机械提取复发次数')}">×${m.confidence}</span>` : '';
     const actions = [
-      m.status !== 'archived' && (m.status === 'candidate' || m.stale) ? `<button data-act="confirm" data-id="${m.id}">确认</button>` : '',
-      `<button data-act="edit" data-id="${m.id}">编辑</button>`,
+      m.status !== 'archived' && (m.status === 'candidate' || m.stale) ? `<button data-act="confirm" data-id="${m.id}">${tr('确认')}</button>` : '',
+      `<button data-act="edit" data-id="${m.id}">${tr('编辑')}</button>`,
       m.status === 'archived'
-        ? `<button data-act="restore" data-id="${m.id}">恢复</button>`
-        : `<button data-act="archive" data-id="${m.id}">归档</button>`,
-      `<button data-act="delete" data-id="${m.id}">删除</button>`
+        ? `<button data-act="restore" data-id="${m.id}">${tr('恢复')}</button>`
+        : `<button data-act="archive" data-id="${m.id}">${tr('归档')}</button>`,
+      `<button data-act="delete" data-id="${m.id}">${tr('删除')}</button>`
     ]
       .filter(Boolean)
       .join(' ');
-    const tr = document.createElement('tr');
-    tr.innerHTML =
+    const row = document.createElement('tr');
+    row.innerHTML =
       `<td class="obj" title="${escapeHtml(extra)}">${escapeHtml(m.text)}${conf}${extra ? `<div class="muted mem-files">${escapeHtml(extra)}</div>` : ''}</td>` +
-      `<td>${MEMORY_KIND_LABELS[m.kind] || escapeHtml(m.kind)}</td>` +
-      `<td>${m.scope === 'global' ? '<span class="mem-candidate">全局</span>' : '项目'}</td><td>${status}</td>` +
+      `<td>${tr(MEMORY_KIND_LABELS[m.kind] || '') || escapeHtml(m.kind)}</td>` +
+      `<td>${m.scope === 'global' ? `<span class="mem-candidate">${tr('全局')}</span>` : tr('项目')}</td><td>${status}</td>` +
       `<td class="num">${m.uses || 0}</td><td class="muted">${new Date(m.updatedAt).toLocaleString()}</td>` +
       `<td class="mem-actions">${actions}</td>`;
-    tbody.appendChild(tr);
+    tbody.appendChild(row);
   }
 }
 
@@ -618,12 +621,12 @@ $('#memory-table').addEventListener('click', async (ev) => {
   if (act === 'edit') {
     const row = btn.closest('tr');
     const current = row?.querySelector('td.obj')?.childNodes[0]?.textContent || '';
-    const text = prompt('编辑记忆内容：', current);
+    const text = prompt(tr('编辑记忆内容：'), current);
     if (text == null || !text.trim()) return;
     await call({ text: text.trim() });
   }
   if (act === 'delete') {
-    if (!confirm('彻底删除这条记忆？（归档是可恢复的软删除，删除不可恢复）')) return;
+    if (!confirm(tr('彻底删除这条记忆？（归档是可恢复的软删除，删除不可恢复）'))) return;
     await call(null, 'DELETE');
   }
   loadMemoryView();
@@ -665,10 +668,10 @@ function renderProfiles() {
     const div = document.createElement('div');
     div.className = 'profile-card' + (configState.profile === key ? ' selected' : '');
     div.innerHTML =
-      `<div class="p-name">${p.label} <span class="muted">${key}</span></div>` +
-      `<div class="p-desc">${p.description}</div>` +
-      `<div class="p-meta">读取上限 ${p.readMaxLines} 行 · 重复读窗口 ${p.repeatReadWindowMs / 60000} 分钟<br>` +
-      `数据文件阈值 ${Math.round(p.blockMaxDataBytes / 1024)} KB · 命令输出 头${p.shellHeadLines}/尾${p.shellTailLines} 行</div>`;
+      `<div class="p-name">${tr(p.label)} <span class="muted">${key}</span></div>` +
+      `<div class="p-desc">${tr(p.description)}</div>` +
+      `<div class="p-meta">${tr('读取上限 {0} 行 · 重复读窗口 {1} 分钟', p.readMaxLines, p.repeatReadWindowMs / 60000)}<br>` +
+      `${tr('数据文件阈值 {0} KB · 命令输出 头{1}/尾{2} 行', Math.round(p.blockMaxDataBytes / 1024), p.shellHeadLines, p.shellTailLines)}</div>`;
     div.addEventListener('click', () => {
       configState.profile = key;
       renderProfiles();
@@ -684,7 +687,7 @@ function renderToggles() {
     const row = document.createElement('div');
     row.className = 'toggle-row';
     row.innerHTML =
-      `<div><div class="t-name">${name}</div><div class="t-desc">${desc}</div></div>` +
+      `<div><div class="t-name">${tr(name)}</div><div class="t-desc">${tr(desc)}</div></div>` +
       `<label class="switch"><input type="checkbox" data-key="${key}" ${configState.hooks?.[key] !== false ? 'checked' : ''}><span class="slider"></span></label>`;
     row.querySelector('input').addEventListener('change', (ev) => {
       configState.hooks = configState.hooks || {};
@@ -702,8 +705,8 @@ function renderOverrides(keys) {
     row.className = 'override-row';
     const current = configState.overrides?.[key];
     row.innerHTML =
-      `<label>${OVERRIDE_DESCS[key] || key}</label>` +
-      `<input type="number" min="0" data-key="${key}" value="${current ?? ''}" placeholder="档位默认: ${profilesMeta[configState.profile]?.[key] ?? ''}">`;
+      `<label>${tr(OVERRIDE_DESCS[key] || key)}</label>` +
+      `<input type="number" min="0" data-key="${key}" value="${current ?? ''}" placeholder="${tr('档位默认: {0}', profilesMeta[configState.profile]?.[key] ?? '')}">`;
     row.querySelector('input').addEventListener('input', (ev) => {
       configState.overrides = configState.overrides || {};
       if (ev.target.value === '') delete configState.overrides[key];
@@ -717,7 +720,7 @@ $('#save-btn').addEventListener('click', async () => {
   const btn = $('#save-btn');
   const msg = $('#save-msg');
   btn.disabled = true;
-  msg.textContent = '保存中…';
+  msg.textContent = tr('保存中…');
   try {
     configState.contextQuery.defaultBudgetChars = Number($('#cfg-context-budget').value);
     configState.contextQuery.previewChars = Number($('#cfg-preview-chars').value);
@@ -738,9 +741,9 @@ $('#save-btn').addEventListener('click', async () => {
       body: JSON.stringify(configState)
     });
     const data = await res.json();
-    msg.textContent = data.ok ? '已保存，立即生效' : `保存失败: ${(data.errors || []).join(', ')}`;
+    msg.textContent = data.ok ? tr('已保存，立即生效') : tr('保存失败: ') + (data.errors || []).join(', ');
   } catch (e) {
-    msg.textContent = '保存失败: ' + e.message;
+    msg.textContent = tr('保存失败: ') + e.message;
   }
   btn.disabled = false;
   setTimeout(() => (msg.textContent = ''), 4000);
