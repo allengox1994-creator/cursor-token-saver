@@ -1,0 +1,135 @@
+<svg viewBox="0 0 1080 700" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" role="img" aria-label="Architecture diagram">
+  <defs>
+    <marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#60a5fa"/>
+    </marker>
+    <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#34d399"/>
+    </marker>
+    <style>
+      .flow { fill: none; stroke: #60a5fa; stroke-width: 1.6; stroke-dasharray: 6 6; animation: dashmove 1.4s linear infinite; }
+      .flow.main { stroke: #34d399; stroke-width: 2.4; }
+      .flow.faint { stroke: #3b4658; stroke-width: 1.4; animation-duration: 2.4s; }
+      @keyframes dashmove { to { stroke-dashoffset: -24; } }
+      .panel { fill: #0e1420; stroke: #232b3a; }
+      .node  { fill: #151d2c; stroke: #2a3550; }
+      .t-title { fill: #34d399; font-size: 14px; font-weight: 700; }
+      .t-name { fill: #dbe2ee; font-size: 13px; font-weight: 600; }
+      .t-desc { fill: #8b96a8; font-size: 10.5px; }
+      .t-label { fill: #8b96a8; font-size: 10px; }
+      .t-main { fill: #34d399; font-size: 12px; font-weight: 600; }
+      .t-foot { fill: #667487; font-size: 10.5px; font-style: italic; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1080" height="700" rx="16" fill="#0b0e14"/>
+
+  <!-- Main reinjection path (act): recall layer to agent -->
+  <path class="flow main" d="M955,168 L955,58 Q955,28 925,28 L140,28 Q110,28 110,58 L110,274" marker-end="url(#arrG)"/>
+  <text class="t-main" x="532" y="19" text-anchor="middle">Act: minimal first screen + evidence IDs &#183; lossless reinjection</text>
+
+  <!-- Agent -->
+  <rect class="node" x="20" y="280" width="180" height="130" rx="14"/>
+  <text class="t-name" x="110" y="326" text-anchor="middle" font-size="16">Cursor Agent</text>
+  <text class="t-desc" x="110" y="350" text-anchor="middle">stateless LLM</text>
+  <text class="t-desc" x="110" y="370" text-anchor="middle">reads &#183; runs &#183; edits</text>
+
+  <!-- 1 Perception -->
+  <rect class="panel" x="250" y="70" width="210" height="480" rx="14"/>
+  <text class="t-title" x="355" y="100" text-anchor="middle">&#9312; Perception &#183; Hooks</text>
+  <g>
+    <rect class="node" x="265" y="118" width="180" height="62" rx="8"/>
+    <text class="t-name" x="355" y="144" text-anchor="middle">read-guard</text>
+    <text class="t-desc" x="355" y="164" text-anchor="middle">caps big reads &#183; delta re-read</text>
+    <rect class="node" x="265" y="192" width="180" height="62" rx="8"/>
+    <text class="t-name" x="355" y="218" text-anchor="middle">shell-guard</text>
+    <text class="t-desc" x="355" y="238" text-anchor="middle">log taming &#183; output diffs</text>
+    <rect class="node" x="265" y="266" width="180" height="62" rx="8"/>
+    <text class="t-name" x="355" y="292" text-anchor="middle">edit-invalidate</text>
+    <text class="t-desc" x="355" y="312" text-anchor="middle">edit tracking</text>
+    <rect class="node" x="265" y="340" width="180" height="62" rx="8"/>
+    <text class="t-name" x="355" y="366" text-anchor="middle">shell-audit</text>
+    <text class="t-desc" x="355" y="386" text-anchor="middle">exit codes &#183; failure watch</text>
+    <rect class="node" x="265" y="414" width="180" height="62" rx="8"/>
+    <text class="t-name" x="355" y="440" text-anchor="middle">session-track</text>
+    <text class="t-desc" x="355" y="460" text-anchor="middle">session lifecycle &#183; auto scan</text>
+  </g>
+  <text class="t-foot" x="355" y="532" text-anchor="middle">fail-open &#183; never blocks the agent</text>
+
+  <!-- 2 Cognition -->
+  <rect class="panel" x="530" y="70" width="250" height="330" rx="14"/>
+  <text class="t-title" x="655" y="100" text-anchor="middle">&#9313; Cognition &#183; 3-Layer Memory</text>
+  <g>
+    <rect class="node" x="545" y="114" width="220" height="60" rx="8"/>
+    <text class="t-name" x="655" y="139" text-anchor="middle">Semantic &#183; facts</text>
+    <text class="t-desc" x="655" y="159" text-anchor="middle">conventions &#183; decisions &#183; gotchas</text>
+    <rect class="node" x="545" y="186" width="220" height="60" rx="8"/>
+    <text class="t-name" x="655" y="211" text-anchor="middle">World model &#183; relations</text>
+    <text class="t-desc" x="655" y="231" text-anchor="middle">entity &#8212;rel&#8594; entity triples</text>
+    <rect class="node" x="545" y="258" width="220" height="60" rx="8"/>
+    <text class="t-name" x="655" y="283" text-anchor="middle">Skills &#183; runbooks</text>
+    <text class="t-desc" x="655" y="303" text-anchor="middle">goal + successful commands</text>
+  </g>
+  <g>
+    <rect class="node" x="545" y="336" width="88" height="24" rx="12"/>
+    <text class="t-label" x="589" y="352" text-anchor="middle">cand.&#8594;confirm</text>
+    <rect class="node" x="641" y="336" width="60" height="24" rx="12"/>
+    <text class="t-label" x="671" y="352" text-anchor="middle">STALE</text>
+    <rect class="node" x="709" y="336" width="56" height="24" rx="12"/>
+    <text class="t-label" x="737" y="352" text-anchor="middle">decay</text>
+  </g>
+  <text class="t-foot" x="655" y="386" text-anchor="middle">never fabricates &#183; never self-confirms</text>
+
+  <!-- 3 Evidence -->
+  <rect class="panel" x="530" y="440" width="250" height="150" rx="14"/>
+  <text class="t-title" x="655" y="470" text-anchor="middle">&#9314; Content-Addressed Evidence</text>
+  <text class="t-desc" x="655" y="498" text-anchor="middle">stable src_ / art_ IDs (content hash)</text>
+  <text class="t-desc" x="655" y="520" text-anchor="middle">lossless diffs &#183; full artifacts on disk</text>
+  <text class="t-desc" x="655" y="542" text-anchor="middle">exact recall by line range / regex</text>
+  <text class="t-foot" x="655" y="572" text-anchor="middle">defers transmission &#183; deletes nothing</text>
+
+  <!-- 4 Recall -->
+  <rect class="panel" x="850" y="170" width="210" height="330" rx="14"/>
+  <text class="t-title" x="955" y="200" text-anchor="middle">&#9315; Recall &#183; Unified Query</text>
+  <g>
+    <rect class="node" x="865" y="214" width="180" height="56" rx="8"/>
+    <text class="t-name" x="955" y="237" text-anchor="middle">context_query</text>
+    <text class="t-desc" x="955" y="256" text-anchor="middle">fused search: code + memory</text>
+    <rect class="node" x="865" y="280" width="180" height="56" rx="8"/>
+    <text class="t-name" x="955" y="303" text-anchor="middle">mode=world</text>
+    <text class="t-desc" x="955" y="322" text-anchor="middle">entity subgraph (1&#8211;2 hops)</text>
+    <rect class="node" x="865" y="346" width="180" height="56" rx="8"/>
+    <text class="t-name" x="955" y="369" text-anchor="middle">bootstrap</text>
+    <text class="t-desc" x="955" y="388" text-anchor="middle">resume a task in ~300 tokens</text>
+    <rect class="node" x="865" y="412" width="180" height="56" rx="8"/>
+    <text class="t-name" x="955" y="435" text-anchor="middle">context_expand</text>
+    <text class="t-desc" x="955" y="454" text-anchor="middle">lossless recovery by ID</text>
+  </g>
+
+  <!-- Dashboard -->
+  <rect class="panel" x="250" y="620" width="530" height="52" rx="12"/>
+  <text class="t-name" x="515" y="642" text-anchor="middle">Global Dashboard &#183; Governance &amp; Metrics</text>
+  <text class="t-desc" x="515" y="661" text-anchor="middle">memory review &#183; waste insights &#183; savings &#183; benchmarks</text>
+
+  <!-- Data flows -->
+  <path class="flow" d="M200,345 L244,345" marker-end="url(#arrB)"/>
+  <text class="t-label" x="222" y="336" text-anchor="middle">observe</text>
+  <path class="flow" d="M460,235 L524,235" marker-end="url(#arrB)"/>
+  <text class="t-label" x="492" y="226" text-anchor="middle">extraction</text>
+  <text class="t-label" x="492" y="252" text-anchor="middle" font-size="9">fail&#8594;fix &#183; scans</text>
+  <path class="flow" d="M460,505 L524,505" marker-end="url(#arrB)"/>
+  <text class="t-label" x="492" y="496" text-anchor="middle">full logs</text>
+  <path class="flow" d="M655,400 L655,434" marker-end="url(#arrB)"/>
+  <text class="t-label" x="665" y="421" text-anchor="start">evidence hashes</text>
+  <path class="flow" d="M780,235 L844,235" marker-end="url(#arrB)"/>
+  <text class="t-label" x="812" y="226" text-anchor="middle">recall</text>
+  <path class="flow" d="M780,515 C815,515 822,472 844,470" marker-end="url(#arrB)"/>
+  <text class="t-label" x="812" y="540" text-anchor="middle">recover by ID</text>
+  <path class="flow faint" d="M355,550 L355,616" marker-end="url(#arrB)"/>
+  <text class="t-label" x="365" y="586" text-anchor="start">event stream</text>
+  <path class="flow faint" d="M655,590 L655,616" marker-end="url(#arrB)"/>
+  <text class="t-label" x="665" y="607" text-anchor="start">metrics</text>
+
+  <!-- Loop caption -->
+  <text class="t-desc" x="540" y="695" text-anchor="middle">perceive &#8594; remember &#8594; recall &#8594; act &#8594; feed back &#8594; learn &#8212; the agent gets cheaper and smarter in your repo, session after session</text>
+</svg>
