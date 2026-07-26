@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursor Token Saver — 无损省 token · 跨会话记忆 · 全本地</title>
+<meta name="description" content="Cursor 的无损省 token 工具包：增量重读、输出差分、结果去重、语义记忆、世界模型。全部本地运行，代码不出机器。">
+<style>
+  :root {
+    --bg: #0b0e14; --panel: #131822; --border: #232b3a; --text: #dbe2ee;
+    --muted: #8b96a8; --accent: #34d399; --accent2: #60a5fa; --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.7 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+  a { color: var(--accent2); text-decoration: none; }
+  code, .cmd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 0; }
+  .logo { font-weight: 700; font-size: 18px; }
+  .logo span { color: var(--accent); }
+  nav .links a { color: var(--muted); margin-left: 24px; font-size: 14px; }
+  nav .links a:hover { color: var(--text); }
+
+  .hero { text-align: center; padding: 72px 0 56px; }
+  .hero h1 { font-size: 44px; line-height: 1.25; letter-spacing: -0.5px; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p.sub { color: var(--muted); font-size: 19px; margin: 20px auto 0; max-width: 640px; }
+  .cmd-box { display: inline-flex; align-items: center; gap: 14px; margin-top: 32px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 22px; font-size: 15px; }
+  .cmd-box .dollar { color: var(--accent); }
+  .cta-row { margin-top: 28px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 12px 26px; border-radius: 9px; font-weight: 600; font-size: 15px; }
+  .btn.primary { background: var(--accent); color: #06281c; }
+  .btn.ghost { border: 1px solid var(--border); color: var(--text); }
+  .btn:hover { filter: brightness(1.1); }
+  .hero .note { margin-top: 16px; color: var(--muted); font-size: 13px; }
+
+  .strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 40px 0 0; }
+  .strip .cell { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 22px; text-align: center; }
+  .strip .cell b { display: block; font-size: 22px; color: var(--accent); margin-bottom: 6px; }
+  .strip .cell span { color: var(--muted); font-size: 14px; }
+
+  section { padding: 72px 0 0; }
+  h2.sec { font-size: 30px; text-align: center; }
+  p.sec-sub { text-align: center; color: var(--muted); margin: 12px auto 40px; max-width: 620px; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .step { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 26px; }
+  .step .n { color: var(--accent); font-weight: 700; font-size: 14px; }
+  .step h3 { margin: 10px 0 8px; font-size: 18px; }
+  .step p { color: var(--muted); font-size: 14.5px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feat { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 26px; }
+  .feat h3 { font-size: 17px; margin-bottom: 8px; }
+  .feat h3::before { content: "▸ "; color: var(--accent); }
+  .feat p { color: var(--muted); font-size: 14.5px; }
+
+  .privacy { margin-top: 72px; background: linear-gradient(135deg, #10231c, #0e1a2b); border: 1px solid #1d3a2e;
+    border-radius: 14px; padding: 40px; text-align: center; }
+  .privacy h2 { font-size: 26px; }
+  .privacy p { color: var(--muted); margin-top: 12px; max-width: 660px; margin-left: auto; margin-right: auto; }
+  .privacy b { color: var(--accent); }
+
+  .pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+  .plan { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 30px; display: flex; flex-direction: column; }
+  .plan.hot { border-color: var(--accent); position: relative; }
+  .plan.hot::after { content: "推荐"; position: absolute; top: -12px; right: 20px; background: var(--accent); color: #06281c;
+    font-size: 12px; font-weight: 700; padding: 2px 12px; border-radius: 99px; }
+  .plan h3 { font-size: 18px; }
+  .plan .price { font-size: 34px; font-weight: 700; margin: 14px 0 2px; }
+  .plan .price small { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .plan ul { list-style: none; margin: 18px 0 24px; flex: 1; }
+  .plan li { color: var(--muted); font-size: 14.5px; padding: 5px 0 5px 22px; position: relative; }
+  .plan li::before { content: "✓"; color: var(--accent); position: absolute; left: 0; }
+  .plan li.soon::before { content: "◷"; color: var(--warn); }
+  .plan .btn { text-align: center; }
+
+  .faq { max-width: 760px; margin: 0 auto; }
+  .faq details { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; margin-bottom: 12px; }
+  .faq summary { cursor: pointer; font-weight: 600; font-size: 15.5px; }
+  .faq details p { color: var(--muted); font-size: 14.5px; margin-top: 12px; }
+
+  footer { margin-top: 88px; border-top: 1px solid var(--border); padding: 32px 0 48px; text-align: center; color: var(--muted); font-size: 13.5px; }
+  @media (max-width: 800px) {
+    .strip, .steps, .grid, .pricing { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="logo">Cursor <span>Token Saver</span></div>
+    <div class="links">
+      <a href="#features">功能</a>
+      <a href="#pricing">定价</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/allengox1994-creator/cursor-token-saver" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>让 Cursor 少花一半 token，<br><em>且不丢一个字节的信息</em></h1>
+    <p class="sub">
+      增量重读、输出差分、结果去重、内容寻址证据库——所有截断都可无损恢复。
+      再加上跨会话语义记忆和项目世界模型，agent 越用越懂你的项目。
+    </p>
+    <div class="cmd-box"><span class="dollar">$</span><span class="cmd">npx cursor-token-saver init</span></div>
+    <div class="cta-row">
+      <a class="btn primary" href="#pricing">免费开始</a>
+      <a class="btn ghost" href="mailto:allengox1994@gmail.com?subject=Pro%20Waitlist">加入 Pro 候补名单</a>
+    </div>
+    <p class="note">节省比例因项目而异——装好后运行 <code>cursor-token-saver bench</code>，用你自己的代码库实测。</p>
+
+    <div class="strip">
+      <div class="cell"><b>无损</b><span>所有压缩带证据 ID，随时精确恢复原文</span></div>
+      <div class="cell"><b>全本地</b><span>hooks、索引、记忆都在你机器上，代码不外发</span></div>
+      <div class="cell"><b>一条命令</b><span>init 装好即生效，零配置，可随时卸载</span></div>
+    </div>
+  </div>
+
+  <section>
+    <h2 class="sec">工作原理</h2>
+    <p class="sec-sub">基于 Cursor 官方 hooks 和 MCP 接口，在工具调用层拦截浪费，不改模型、不改代码。</p>
+    <div class="steps">
+      <div class="step"><span class="n">01</span><h3>拦截全量传输</h3>
+        <p>超大文件读取、重复命令输出、没变的文件重读——在进入上下文之前被替换成大纲、差分或一行"内容未变"标记。</p></div>
+      <div class="step"><span class="n">02</span><h3>按需无损展开</h3>
+        <p>每次截断都留下稳定的证据 ID。agent 真需要原文时，一次调用精确恢复任意行区间——省的是浪费，不是信息。</p></div>
+      <div class="step"><span class="n">03</span><h3>跨会话越用越省</h3>
+        <p>约定、决策、踩过的坑、部署流程沉淀为可验证的记忆；新会话热启动包用几百 token 恢复全部任务状态。</p></div>
+    </div>
+  </section>
+
+  <section id="features">
+    <h2 class="sec">六个核心能力</h2>
+    <p class="sec-sub">每一项都遵循同一条铁律：fail-open，绝不因为工具故障挡住 agent 干活。</p>
+    <div class="grid">
+      <div class="feat"><h3>无损压缩传输</h3><p>增量重读只传行级差分；重复命令只传和上次的差异；数据文件给结构画像。全部可恢复。</p></div>
+      <div class="feat"><h3>混合代码检索</h3><p>精确匹配 + BM25 + 本地神经向量三路融合，低置信度自动扩大候选，先给预览再按需展开。</p></div>
+      <div class="feat"><h3>语义记忆</h3><p>工程事实挂文件哈希存储：文件变了自动标过期，机械提取只生成候选、确认才生效——不会积累幻觉。</p></div>
+      <div class="feat"><h3>项目世界模型</h3><p>自动从 package.json / docker-compose / nginx / CI 提取"域名→端口→服务"关系图，一行三元组顶几百行配置。</p></div>
+      <div class="feat"><h3>Runbook 技能</h3><p>任务收尾自动提取成功命令序列；失败→修复的过程被记录成"坑"，下个会话直接复用。</p></div>
+      <div class="feat"><h3>全局面板</h3><p>多项目统一视图：节省统计换算成钱、浪费洞察、记忆审阅、检索质量评测，一键启动。</p></div>
+    </div>
+  </section>
+
+  <div class="privacy">
+    <h2>你的代码不出你的机器</h2>
+    <p>
+      与云端记忆产品不同，这里的<b>索引、嵌入、记忆、统计全部存在本地</b>。
+      神经嵌入用本地 ONNX 推理，没有遥测、没有电话回家，授权校验也是离线签名。
+      对合规敏感的团队，这不是一个功能，是前提。
+    </p>
+  </div>
+
+  <section id="pricing">
+    <h2 class="sec">定价</h2>
+    <p class="sec-sub">免费版完整可用，不是试用版。付费买的是团队协作和跨设备能力。</p>
+    <div class="pricing">
+      <div class="plan">
+        <h3>Free</h3>
+        <div class="price">¥0<small> 永久</small></div>
+        <ul>
+          <li>全部省 token hooks 与 MCP 工具</li>
+          <li>本地语义记忆 + 世界模型</li>
+          <li>单机全局面板与统计</li>
+          <li>基准测试与检索评测</li>
+        </ul>
+        <a class="btn ghost cmd" href="#top">npx cursor-token-saver init</a>
+      </div>
+      <div class="plan hot">
+        <h3>Pro</h3>
+        <div class="price">$12<small> /月</small></div>
+        <ul>
+          <li>Free 的一切</li>
+          <li class="soon">记忆跨设备同步</li>
+          <li class="soon">成本分析与预算告警增强</li>
+          <li class="soon">优先支持</li>
+        </ul>
+        <a class="btn primary" href="mailto:allengox1994@gmail.com?subject=Pro%20Waitlist">加入候补名单</a>
+      </div>
+      <div class="plan">
+        <h3>Team</h3>
+        <div class="price">$25<small> /人/月</small></div>
+        <ul>
+          <li>Pro 的一切</li>
+          <li class="soon">团队共享记忆库（新人入职即继承全队经验）</li>
+          <li class="soon">团队成本看板与治理权限</li>
+          <li class="soon">私有部署</li>
+        </ul>
+        <a class="btn ghost" href="mailto:allengox1994@gmail.com?subject=Team%20%E5%92%A8%E8%AF%A2">联系我们</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <h2 class="sec">常见问题</h2>
+    <p class="sec-sub"></p>
+    <div class="faq">
+      <details>
+        <summary>会不会让 agent 变笨？</summary>
+        <p>不会，这是整个设计的第一约束。所有压缩都是无损的：截断处留证据 ID，agent 一次调用即可精确恢复原文任意区间。检索有三路融合和自动兜底，LSP 不可用会降级到导入图。规则明确引导 agent"不确定就展开"，而不是靠猜。</p>
+      </details>
+      <details>
+        <summary>宣传的节省比例可信吗？</summary>
+        <p>我们不给统一数字，因为节省取决于你的项目和操作构成。装好后运行 <code>cursor-token-saver bench</code>，它在你的真实代码库上重放六类典型操作，输出带完整口径说明的对比报告——度量的是传输层 token，不承诺账单降幅。</p>
+      </details>
+      <details>
+        <summary>记忆会不会积累错误信息？</summary>
+        <p>机械提取的记忆全部是"候选"状态，agent 或你确认后才生效；挂了文件的记忆存内容哈希，文件一变自动标记过期；长期没用到的自动归档。面板上每一条都能看、能改、能删。</p>
+      </details>
+      <details>
+        <summary>卸载干净吗？</summary>
+        <p>所有文件都在项目的 .cursor/ 目录和 ~/.cursor-token-saver/ 下，删掉即完全卸载，不碰你的代码和 git 历史。</p>
+      </details>
+      <details>
+        <summary>Cursor 更新会不会弄坏它？</summary>
+        <p>所有 hooks 都是 fail-open 的：任何异常都放行原始操作，最坏情况是回到没装插件的状态，绝不会挡住你干活。</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    Cursor Token Saver · 全本地 · 无遥测 · <a href="https://github.com/allengox1994-creator/cursor-token-saver" target="_blank" rel="noopener">GitHub</a> · <a href="mailto:allengox1994@gmail.com">联系</a>
+  </footer>
+</div>
+</body>
+</html>
