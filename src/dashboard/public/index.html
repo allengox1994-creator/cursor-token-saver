@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cursor-token-saver 面板</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo">◍</span>
+      <div>
+        <h1>cursor-token-saver <span class="muted">全局面板</span></h1>
+        <select id="project-select" title="选择项目">
+          <option value="all">全部项目</option>
+        </select>
+        <button id="project-remove" class="hidden" title="从面板剔除该项目（不删除项目文件；重跑 init 可恢复）">剔除</button>
+      </div>
+    </div>
+    <nav>
+      <button class="tab-btn active" data-tab="stats">统计</button>
+      <button class="tab-btn" data-tab="index">索引</button>
+      <button class="tab-btn" data-tab="context">上下文</button>
+      <button class="tab-btn" data-tab="waste">浪费洞察</button>
+      <button class="tab-btn" data-tab="memory">记忆</button>
+      <button class="tab-btn" data-tab="config">配置</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 统计页 -->
+    <section id="tab-stats" class="tab active">
+      <div id="empty-hint" class="empty hidden">
+        暂无统计数据 —— 安装 hooks 后在 Cursor 里正常使用，拦截事件会自动出现在这里。
+      </div>
+
+      <div class="cards">
+        <div class="card accent">
+          <div class="card-label">累计节省 <span class="muted">(估算)</span></div>
+          <div class="card-value" id="c-saved">-</div>
+          <div class="card-sub" id="c-saved-money"></div>
+          <div class="card-sub" id="c-saved-bytes"></div>
+        </div>
+        <div class="card">
+          <div class="card-label">拦截次数</div>
+          <div class="card-value" id="c-denies">-</div>
+          <div class="card-sub">重复读取 + 低价值文件</div>
+        </div>
+        <div class="card">
+          <div class="card-label">截断次数</div>
+          <div class="card-value" id="c-truncs">-</div>
+          <div class="card-sub">大文件读取 + 长命令输出</div>
+        </div>
+        <div class="card">
+          <div class="card-label">会话 / 压缩</div>
+          <div class="card-value" id="c-sessions">-</div>
+          <div class="card-sub" id="c-compact-hint"></div>
+        </div>
+      </div>
+
+      <div class="panel hidden" id="panel-projects">
+        <h2>项目总览 <span class="muted">(点击行切换到该项目)</span></h2>
+        <table id="projects-table">
+          <thead>
+            <tr><th>项目</th><th class="num">节省 (tokens)</th><th class="num">≈ 省钱</th><th class="num">拦截</th><th class="num">截断</th><th class="num">事件</th><th>语义模型</th><th>最近活动</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h2>每日节省趋势</h2>
+          <canvas id="chart-daily"></canvas>
+        </div>
+        <div class="panel">
+          <h2>按动作分布</h2>
+          <canvas id="chart-actions"></canvas>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h2>Top 浪费文件</h2>
+          <canvas id="chart-files"></canvas>
+        </div>
+        <div class="panel">
+          <h2>Top 噪音命令（输出体量）</h2>
+          <canvas id="chart-commands"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>最近事件</h2>
+        <table id="events-table">
+          <thead>
+            <tr><th>时间</th><th class="col-project">项目</th><th>来源</th><th>动作</th><th>对象</th><th class="num">节省 (tokens)</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>费用换算 <span class="muted" id="embed-model-line"></span></h2>
+        <div class="price-bar">
+          <label>计价模型
+            <select id="price-preset"></select>
+          </label>
+          <label>输入价 ($/百万 token)
+            <input type="number" id="price-input" min="0.01" step="0.01">
+          </label>
+          <label>美元汇率 (CNY)
+            <input type="number" id="rate-input" min="0.1" step="0.1">
+          </label>
+          <button id="price-save">保存</button>
+          <span id="price-msg" class="muted"></span>
+        </div>
+      </div>
+
+      <p class="muted footnote">
+        token 节省值按 字节 / 4 估算、按所选模型的未缓存输入价换算，非账单精确值；上下文压缩事件里的 context_tokens 为 Cursor 上报的真实值。
+      </p>
+    </section>
+
+    <!-- 索引页 -->
+    <section id="tab-index" class="tab">
+      <div id="index-hint" class="empty hidden">
+        索引是按项目存储的——请在左上角选择一个具体项目查看。
+      </div>
+      <div id="index-none" class="empty hidden">
+        该项目还没有嵌入索引。Cursor 打开该项目后约 45 秒会自动建立；也可以手动运行
+        <code>cursor-token-saver index</code> 立即预建。
+      </div>
+      <div id="index-body">
+        <div class="cards">
+          <div class="card">
+            <div class="card-label">嵌入模型</div>
+            <div class="card-value small" id="i-model">-</div>
+            <div class="card-sub" id="i-updated"></div>
+          </div>
+          <div class="card">
+            <div class="card-label">已索引文件 / 代码块</div>
+            <div class="card-value" id="i-files">-</div>
+            <div class="card-sub" id="i-size"></div>
+          </div>
+          <div class="card">
+            <div class="card-label">健康度</div>
+            <div class="card-value" id="i-health">-</div>
+            <div class="card-sub" id="i-health-sub"></div>
+          </div>
+          <div class="card">
+            <div class="card-label">自动索引</div>
+            <div class="card-value small" id="i-auto">-</div>
+            <div class="card-sub" id="i-auto-sub"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>文件明细 <input type="text" id="index-filter" placeholder="过滤文件路径…"></h2>
+          <table id="index-table">
+            <thead>
+              <tr><th>文件</th><th class="num">代码块</th><th>状态</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 无损上下文页 -->
+    <section id="tab-context" class="tab">
+      <div id="context-hint" class="empty hidden">
+        上下文证据按项目存储——请在左上角选择一个具体项目查看。
+      </div>
+      <div id="context-body">
+        <div class="cards">
+          <div class="card">
+            <div class="card-label">证据条目</div>
+            <div class="card-value" id="x-entries">-</div>
+            <div class="card-sub" id="x-entry-sub"></div>
+          </div>
+          <div class="card">
+            <div class="card-label">本地证据体积</div>
+            <div class="card-value" id="x-bytes">-</div>
+            <div class="card-sub">源码仅存引用；体积主要来自完整日志 artifact</div>
+          </div>
+          <div class="card">
+            <div class="card-label">会话软预算</div>
+            <div class="card-value" id="x-budget">-</div>
+            <div class="card-sub" id="x-budget-sub"></div>
+          </div>
+          <div class="card">
+            <div class="card-label">持久检查点</div>
+            <div class="card-value" id="x-checkpoints">-</div>
+            <div class="card-sub">压缩或新会话可按 conversation 恢复</div>
+          </div>
+          <div class="card">
+            <div class="card-label">全局索引服务</div>
+            <div class="card-value small" id="x-daemon">-</div>
+            <div class="card-sub" id="x-daemon-sub"></div>
+          </div>
+          <div class="card">
+            <div class="card-label">离线检索评测</div>
+            <div class="card-value small" id="x-eval">-</div>
+            <div class="card-sub" id="x-eval-sub"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>最近证据 <span class="muted">（只显示项目相对路径和元数据，不直接暴露内容）</span></h2>
+          <table id="context-table">
+            <thead><tr><th>ID</th><th>类型</th><th>文件</th><th class="num">大小</th><th>最近访问</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 浪费洞察页 -->
+    <section id="tab-waste" class="tab">
+      <div class="panel">
+        <h2>校准建议 <span class="muted" id="waste-window"></span></h2>
+        <ul id="waste-suggestions" class="suggestions"></ul>
+      </div>
+      <div class="panel">
+        <h2>频繁全量重读的文件 <span class="muted">（每次重读都是全额 token；≥3 次才显示）</span></h2>
+        <table id="waste-reads">
+          <thead><tr><th>文件</th><th class="num">次数</th><th class="num">单次体积</th><th class="num">重复浪费</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h2>未治理的高噪音命令 <span class="muted">（不在 shell-guard 白名单、输出直接进上下文）</span></h2>
+        <table id="waste-commands">
+          <thead><tr><th>命令</th><th class="num">次数</th><th class="num">累计输出</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h2>拦截后被重试放行的文件 <span class="muted">（override 频繁 = 阈值拦错了）</span></h2>
+        <table id="waste-overrides">
+          <thead><tr><th>文件</th><th class="num">override 次数</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 记忆页 -->
+    <section id="tab-memory" class="tab">
+      <div id="memory-hint" class="empty hidden">
+        记忆是按项目存储的 —— 请在左上角选择一个具体项目查看。
+      </div>
+      <div id="memory-body">
+        <div class="cards">
+          <div class="card"><div class="card-label">生效 / 候选</div><div class="card-value" id="mem-counts">-</div></div>
+          <div class="card"><div class="card-label">累计召回</div><div class="card-value" id="mem-recalls">-</div><div class="card-sub">记忆被 agent 用到的次数</div></div>
+          <div class="card"><div class="card-label">从未召回</div><div class="card-value" id="mem-never">-</div><div class="card-sub">写了没用上的，考虑清理</div></div>
+          <div class="card"><div class="card-label">过期待确认</div><div class="card-value" id="mem-stale">-</div><div class="card-sub">挂载文件已变化</div></div>
+          <div class="card"><div class="card-label">关系 / 技能</div><div class="card-value" id="mem-world">-</div><div class="card-sub" id="mem-skill-reuse">世界模型三元组 / runbook</div></div>
+        </div>
+        <div class="panel">
+          <h2>语义记忆
+            <span class="muted">（agent 沉淀的工程事实：约定/决策/坑/入口。挂了文件的条目在文件变化后自动标记过期）</span>
+          </h2>
+          <table id="memory-table">
+            <thead><tr><th>记忆</th><th>类型</th><th>作用域</th><th>状态</th><th class="num">召回</th><th>更新时间</th><th>操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <p class="footnote muted">候选 = 机械提取待确认（含 checkpoint 决策和"失败→修复"记录）；过期 = 挂载文件已变化；全局 = 跨项目通用事实；归档条目不进 agent 检索，可随时恢复。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 配置页 -->
+    <section id="tab-config" class="tab">
+      <div id="config-hint" class="empty hidden">
+        配置是按项目存储的（各项目的 <code>.cursor/token-saver.json</code>）——请在左上角选择一个具体项目后编辑。
+      </div>
+      <div id="config-body">
+      <div class="panel">
+        <h2>激进度档位</h2>
+        <p class="muted">档位决定各项阈值的默认值，改完立即生效（hooks 每次执行都会重新读配置）。</p>
+        <div id="profile-cards" class="profile-cards"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Hook 开关</h2>
+        <div id="hook-toggles" class="toggles"></div>
+      </div>
+
+      <div class="panel">
+        <h2>阈值覆盖 <span class="muted">(留空使用档位默认值)</span></h2>
+        <div id="override-inputs" class="overrides"></div>
+      </div>
+
+      <div class="panel">
+        <h2>无损上下文策略</h2>
+        <div class="overrides">
+          <div class="override-row"><label>context_query 首屏字符预算</label><input id="cfg-context-budget" type="number" min="800"></div>
+          <div class="override-row"><label>每个命中预览字符</label><input id="cfg-preview-chars" type="number" min="40"></div>
+          <div class="override-row"><label>任务软预算 (tokens，不会硬拦截)</label><input id="cfg-task-budget" type="number" min="1000"></div>
+          <div class="override-row"><label>预算提醒比例 (%)</label><input id="cfg-warn-percent" type="number" min="1" max="100"></div>
+          <div class="override-row"><label>Artifact 保留天数</label><input id="cfg-artifact-days" type="number" min="1"></div>
+          <div class="override-row"><label>Artifact 最大体积 (MB)</label><input id="cfg-artifact-mb" type="number" min="1"></div>
+          <div class="override-row"><label>全局索引服务端口</label><input id="cfg-daemon-port" type="number" min="1024" max="65535"></div>
+          <div class="toggle-row"><div><div class="t-name">共享全局模型实例</div><div class="t-desc">不可用时自动回退项目内后端</div></div><label class="switch"><input id="cfg-daemon-enabled" type="checkbox"><span class="slider"></span></label></div>
+          <div class="toggle-row"><div><div class="t-name">索引变化后自动评测</div><div class="t-desc">后台低优先级运行；默认每项目最多每天一次</div></div><label class="switch"><input id="cfg-auto-eval" type="checkbox"><span class="slider"></span></label></div>
+          <div class="override-row"><label>自动评测最短间隔（小时）</label><input id="cfg-auto-eval-hours" type="number" min="1" max="720"></div>
+          <div class="override-row"><label>自动评测查询数</label><input id="cfg-auto-eval-limit" type="number" min="5" max="200"></div>
+        </div>
+      </div>
+
+      <div class="save-bar">
+        <button id="save-btn">保存配置</button>
+        <span id="save-msg" class="muted"></span>
+      </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

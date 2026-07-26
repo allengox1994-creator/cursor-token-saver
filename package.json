@@ -1,0 +1,34 @@
+{
+  "name": "cursor-token-saver",
+  "version": "0.10.0",
+  "description": "Cursor 无损省 token 工具包：项目语义记忆、增量重读、输出差分、结果去重、内容寻址证据、渐进展开与全局面板",
+  "type": "module",
+  "bin": {
+    "cursor-token-saver": "bin/cli.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "allengox1994-creator <allengox1994@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allengox1994-creator/cursor-token-saver.git"
+  },
+  "homepage": "https://github.com/allengox1994-creator/cursor-token-saver#readme",
+  "bugs": {
+    "url": "https://github.com/allengox1994-creator/cursor-token-saver/issues"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "express": "^5.1.0"
+  }
+}

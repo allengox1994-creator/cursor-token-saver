@@ -1,0 +1,14 @@
+# 依赖
+node_modules/
+
+# 本地运行数据（hooks 安装副本、统计、索引、记忆——由 init 生成，不入库）
+.cursor/
+
+# 系统与编辑器
+.DS_Store
+*.log
+
+# 环境与密钥（授权私钥在 ~/.cursor-token-saver/，本目录任何 pem 一律不入库）
+.env
+.env.local
+*.pem
