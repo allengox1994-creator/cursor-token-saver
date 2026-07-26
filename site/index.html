@@ -59,6 +59,9 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.3px; }
   .feat p { color: var(--muted); font-size: 14.5px; }
 
+  .diagram-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; overflow-x: auto; }
+  .diagram-wrap svg { display: block; min-width: 860px; width: 100%; height: auto; }
   .privacy { margin-top: 72px; background: linear-gradient(135deg, #10231c, #0e1a2b); border: 1px solid #1d3a2e;
     border-radius: 14px; padding: 40px; text-align: center; }
   .privacy h2 { font-size: 26px; }
@@ -96,6 +99,7 @@
   <nav>
     <div class="logo">Cursor <span>Token Saver</span></div>
     <div class="links">
+      <a href="#architecture">原理</a>
       <a href="#concepts">概念</a>
       <a href="#features">功能</a>
       <a href="#pricing">定价</a>
@@ -135,6 +139,146 @@
         <p>每次截断都留下稳定的证据 ID。agent 真需要原文时，一次调用精确恢复任意行区间——省的是浪费，不是信息。</p></div>
       <div class="step"><span class="n">03</span><h3>跨会话越用越省</h3>
         <p>约定、决策、踩过的坑、部署流程沉淀为可验证的记忆；新会话热启动包用几百 token 恢复全部任务状态。</p></div>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <h2 class="sec">框架运行原理</h2>
+    <p class="sec-sub">四层架构，一个闭环：感知 → 记忆 → 回忆 → 行动 → 反馈 → 学习。绿色主线是无损回注路径——模型只收最小首屏 + 证据 ID。</p>
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 1080 700" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,'PingFang SC','Microsoft YaHei',sans-serif" role="img" aria-label="框架运行原理图">
+        <defs>
+          <marker id="arrB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#60a5fa"/>
+          </marker>
+          <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#34d399"/>
+          </marker>
+          <style>
+            .flow { fill: none; stroke: #60a5fa; stroke-width: 1.6; stroke-dasharray: 6 6; animation: dashmove 1.4s linear infinite; }
+            .flow.main { stroke: #34d399; stroke-width: 2.4; }
+            .flow.faint { stroke: #3b4658; stroke-width: 1.4; animation-duration: 2.4s; }
+            @keyframes dashmove { to { stroke-dashoffset: -24; } }
+            .panel { fill: #0e1420; stroke: #232b3a; }
+            .node  { fill: #151d2c; stroke: #2a3550; }
+            .t-title { fill: #34d399; font-size: 14px; font-weight: 700; }
+            .t-name { fill: #dbe2ee; font-size: 13px; font-weight: 600; }
+            .t-desc { fill: #8b96a8; font-size: 10.5px; }
+            .t-label { fill: #8b96a8; font-size: 10px; }
+            .t-main { fill: #34d399; font-size: 12px; font-weight: 600; }
+            .t-foot { fill: #667487; font-size: 10.5px; font-style: italic; }
+          </style>
+        </defs>
+
+        <!-- 回注主线（行动）：回忆层 → agent -->
+        <path class="flow main" d="M955,168 L955,58 Q955,28 925,28 L140,28 Q110,28 110,58 L110,274" marker-end="url(#arrG)"/>
+        <text class="t-main" x="532" y="19" text-anchor="middle">行动：最小首屏 + 证据 ID · 无损回注</text>
+
+        <!-- Agent -->
+        <rect class="node" x="20" y="280" width="180" height="130" rx="14"/>
+        <text class="t-name" x="110" y="326" text-anchor="middle" font-size="16">Cursor Agent</text>
+        <text class="t-desc" x="110" y="350" text-anchor="middle">无状态 LLM</text>
+        <text class="t-desc" x="110" y="370" text-anchor="middle">读文件 · 跑命令 · 改代码</text>
+
+        <!-- ① 感知层 -->
+        <rect class="panel" x="250" y="70" width="210" height="480" rx="14"/>
+        <text class="t-title" x="355" y="100" text-anchor="middle">① 感知层 · Hooks</text>
+        <g>
+          <rect class="node" x="265" y="118" width="180" height="62" rx="8"/>
+          <text class="t-name" x="355" y="144" text-anchor="middle">read-guard</text>
+          <text class="t-desc" x="355" y="164" text-anchor="middle">拦超大读 · 增量重读</text>
+          <rect class="node" x="265" y="192" width="180" height="62" rx="8"/>
+          <text class="t-name" x="355" y="218" text-anchor="middle">shell-guard</text>
+          <text class="t-desc" x="355" y="238" text-anchor="middle">日志治理 · 输出差分</text>
+          <rect class="node" x="265" y="266" width="180" height="62" rx="8"/>
+          <text class="t-name" x="355" y="292" text-anchor="middle">edit-invalidate</text>
+          <text class="t-desc" x="355" y="312" text-anchor="middle">编辑追踪</text>
+          <rect class="node" x="265" y="340" width="180" height="62" rx="8"/>
+          <text class="t-name" x="355" y="366" text-anchor="middle">shell-audit</text>
+          <text class="t-desc" x="355" y="386" text-anchor="middle">退出码 · 失败观测</text>
+          <rect class="node" x="265" y="414" width="180" height="62" rx="8"/>
+          <text class="t-name" x="355" y="440" text-anchor="middle">session-track</text>
+          <text class="t-desc" x="355" y="460" text-anchor="middle">会话生命周期 · 自动扫描</text>
+        </g>
+        <text class="t-foot" x="355" y="532" text-anchor="middle">fail-open · 绝不阻塞 agent</text>
+
+        <!-- ② 认知层 -->
+        <rect class="panel" x="530" y="70" width="250" height="330" rx="14"/>
+        <text class="t-title" x="655" y="100" text-anchor="middle">② 认知层 · 三层可验证记忆</text>
+        <g>
+          <rect class="node" x="545" y="114" width="220" height="60" rx="8"/>
+          <text class="t-name" x="655" y="139" text-anchor="middle">语义记忆 · 事实层</text>
+          <text class="t-desc" x="655" y="159" text-anchor="middle">约定 / 决策 / 坑 / 入口</text>
+          <rect class="node" x="545" y="186" width="220" height="60" rx="8"/>
+          <text class="t-name" x="655" y="211" text-anchor="middle">世界模型 · 关系层</text>
+          <text class="t-desc" x="655" y="231" text-anchor="middle">实体 —关系→ 实体 三元组</text>
+          <rect class="node" x="545" y="258" width="220" height="60" rx="8"/>
+          <text class="t-name" x="655" y="283" text-anchor="middle">技能 Runbook · 程序层</text>
+          <text class="t-desc" x="655" y="303" text-anchor="middle">目标 + 成功命令序列</text>
+        </g>
+        <g>
+          <rect class="node" x="545" y="336" width="74" height="24" rx="12"/>
+          <text class="t-label" x="582" y="352" text-anchor="middle">候选→确认</text>
+          <rect class="node" x="627" y="336" width="70" height="24" rx="12"/>
+          <text class="t-label" x="662" y="352" text-anchor="middle">STALE 检测</text>
+          <rect class="node" x="705" y="336" width="60" height="24" rx="12"/>
+          <text class="t-label" x="735" y="352" text-anchor="middle">衰减×置信</text>
+        </g>
+        <text class="t-foot" x="655" y="386" text-anchor="middle">机器不伪造 · 不自我确认</text>
+
+        <!-- ③ 证据层 -->
+        <rect class="panel" x="530" y="440" width="250" height="150" rx="14"/>
+        <text class="t-title" x="655" y="470" text-anchor="middle">③ 证据层 · 内容寻址存储</text>
+        <text class="t-desc" x="655" y="498" text-anchor="middle">src_ / art_ 稳定证据 ID（内容哈希）</text>
+        <text class="t-desc" x="655" y="520" text-anchor="middle">无损差分 · 全量 artifact 落盘</text>
+        <text class="t-desc" x="655" y="542" text-anchor="middle">按行区间 / 正则精确回取</text>
+        <text class="t-foot" x="655" y="572" text-anchor="middle">只延迟传输 · 不删除信息</text>
+
+        <!-- ④ 回忆层 -->
+        <rect class="panel" x="850" y="170" width="210" height="330" rx="14"/>
+        <text class="t-title" x="955" y="200" text-anchor="middle">④ 回忆层 · 统一查询</text>
+        <g>
+          <rect class="node" x="865" y="214" width="180" height="56" rx="8"/>
+          <text class="t-name" x="955" y="237" text-anchor="middle">context_query</text>
+          <text class="t-desc" x="955" y="256" text-anchor="middle">检索融合：代码 + 记忆</text>
+          <rect class="node" x="865" y="280" width="180" height="56" rx="8"/>
+          <text class="t-name" x="955" y="303" text-anchor="middle">mode=world</text>
+          <text class="t-desc" x="955" y="322" text-anchor="middle">实体关系子图（1-2 跳）</text>
+          <rect class="node" x="865" y="346" width="180" height="56" rx="8"/>
+          <text class="t-name" x="955" y="369" text-anchor="middle">bootstrap</text>
+          <text class="t-desc" x="955" y="388" text-anchor="middle">热启动包：几百 token 续任务</text>
+          <rect class="node" x="865" y="412" width="180" height="56" rx="8"/>
+          <text class="t-name" x="955" y="435" text-anchor="middle">context_expand</text>
+          <text class="t-desc" x="955" y="454" text-anchor="middle">按 ID 无损恢复原文</text>
+        </g>
+
+        <!-- 面板 -->
+        <rect class="panel" x="250" y="620" width="530" height="52" rx="12"/>
+        <text class="t-name" x="515" y="642" text-anchor="middle">全局面板 · Governance &amp; Metrics</text>
+        <text class="t-desc" x="515" y="661" text-anchor="middle">记忆审阅 · 浪费洞察 · 省钱统计 · 基准测试</text>
+
+        <!-- 数据流 -->
+        <path class="flow" d="M200,345 L244,345" marker-end="url(#arrB)"/>
+        <text class="t-label" x="222" y="336" text-anchor="middle">感知</text>
+        <path class="flow" d="M460,235 L524,235" marker-end="url(#arrB)"/>
+        <text class="t-label" x="492" y="226" text-anchor="middle">机械提取</text>
+        <text class="t-label" x="492" y="252" text-anchor="middle" font-size="9">失败→修复·扫描</text>
+        <path class="flow" d="M460,505 L524,505" marker-end="url(#arrB)"/>
+        <text class="t-label" x="492" y="496" text-anchor="middle">全量落盘</text>
+        <path class="flow" d="M655,400 L655,434" marker-end="url(#arrB)"/>
+        <text class="t-label" x="665" y="421" text-anchor="start">挂证据哈希</text>
+        <path class="flow" d="M780,235 L844,235" marker-end="url(#arrB)"/>
+        <text class="t-label" x="812" y="226" text-anchor="middle">召回</text>
+        <path class="flow" d="M780,515 C815,515 822,472 844,470" marker-end="url(#arrB)"/>
+        <text class="t-label" x="812" y="540" text-anchor="middle">按 ID 恢复</text>
+        <path class="flow faint" d="M355,550 L355,616" marker-end="url(#arrB)"/>
+        <text class="t-label" x="365" y="586" text-anchor="start">事件流</text>
+        <path class="flow faint" d="M655,590 L655,616" marker-end="url(#arrB)"/>
+        <text class="t-label" x="665" y="607" text-anchor="start">度量</text>
+
+        <!-- 闭环标注 -->
+        <text class="t-desc" x="540" y="695" text-anchor="middle">感知 → 记忆 → 回忆 → 行动 → 反馈 → 学习 —— agent 在你的项目里越用越便宜、越用越懂</text>
+      </svg>
     </div>
   </section>
 
