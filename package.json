@@ -1,7 +1,26 @@
 {
   "name": "cursor-token-saver",
-  "version": "0.10.0",
-  "description": "Cursor 无损省 token 工具包：项目语义记忆、增量重读、输出差分、结果去重、内容寻址证据、渐进展开与全局面板",
+  "version": "0.10.1",
+  "description": "A cognitive layer for Cursor's AI agent: lossless token savings via a content-addressed evidence store, plus verifiable semantic memory, project world model and skill runbooks. Fully local, zero telemetry. | 给 Cursor agent 的认知层：内容寻址证据库无损省 token；可验证语义记忆、项目世界模型、技能 Runbook。全本地、零遥测。",
+  "keywords": [
+    "cursor",
+    "cursor-ide",
+    "mcp",
+    "mcp-server",
+    "token",
+    "token-saving",
+    "llm",
+    "llm-agent",
+    "agent",
+    "memory",
+    "semantic-memory",
+    "world-model",
+    "context",
+    "cognitive-architecture",
+    "hooks",
+    "embeddings",
+    "developer-tools"
+  ],
   "type": "module",
   "bin": {
     "cursor-token-saver": "bin/cli.mjs"
